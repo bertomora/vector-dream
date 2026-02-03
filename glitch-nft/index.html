@@ -427,7 +427,7 @@ function gen(s) {
   // === WILD CARD MUTATIONS (8-15% chance each, stacking for uniqueness) ===
   if (R() < 0.12) C.mirrorAmt = 0.85 + R() * 0.15;
   if (R() < 0.10) C.chromaAmt += 0.25 + R() * 0.3;
-  if (R() < 0.08) C.pixelSize = 1 + Math.floor(R() * 12);  // can go tiny or huge
+  if (R() < 0.06) C.pixelSize = 1 + Math.floor(R() * 8);  // varied but not extreme
   if (R() < 0.10) C.grainAmt += 0.1 + R() * 0.2;
   if (R() < 0.10) C.crtAmt += 0.3 + R() * 0.4;
   if (R() < 0.08) C.invertAmt = 0.7 + R() * 0.3;
@@ -975,7 +975,7 @@ function render(time) {
   gl.uniform1f(unis.h3, C.h3);
   gl.uniform1f(unis.clusters, C.clusters);
   gl.uniform1f(unis.density, C.density);
-  gl.uniform1f(unis.pixelSize, C.pixelSize);
+  gl.uniform1f(unis.pixelSize, C.pixelSize * 0.8);  // 20% less pixelated
   gl.uniform1f(unis.scatter, C.scatter);
   gl.uniform1f(unis.glitchAmt, C.glitchAmt);
   gl.uniform1f(unis.rectGlitch, C.rectGlitch);
