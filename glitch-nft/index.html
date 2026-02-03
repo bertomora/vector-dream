@@ -77,14 +77,14 @@ function gen(s) {
   else if (zoneRoll < 0.88) zone = 'edges';
   else zone = 'scattered';
   
-  // === BACKGROUND TYPE ===
+  // === BACKGROUND TYPE (with more even distribution) ===
   const bgRoll = R();
   let bgType;
-  if (bgRoll < 0.4) bgType = 'solid';
-  else if (bgRoll < 0.7) bgType = 'gradient';
+  if (bgRoll < 0.33) bgType = 'solid';
+  else if (bgRoll < 0.66) bgType = 'gradient';
   else bgType = 'textured';
   
-  // === EXPANDED COLOR PALETTES (16 options) ===
+  // === EXPANDED COLOR PALETTES (24 options) ===
   const pals = [
     [330, 185, 0],     // pink/cyan/red
     [320, 190, 30],    // magenta/teal/orange
@@ -102,17 +102,24 @@ function gen(s) {
     [270, 90, 180],    // purple/yellow-green/magenta
     [0, 210, 60],      // red/cyan-blue/yellow
     [225, 45, 135],    // blue/orange/pink
+    [120, 300, 60],    // green/magenta/yellow
+    [180, 0, 270],     // cyan/red/purple
+    [60, 240, 0],      // yellow/blue/red
+    [150, 30, 330],    // teal/orange/violet
+    [90, 270, 180],    // lime/purple/cyan
+    [210, 60, 300],    // sky-blue/yellow/magenta
+    [240, 120, 0],     // blue/green/red
+    [30, 150, 270],    // orange/teal/purple
   ];
   const pal = pals[Math.floor(R() * pals.length)];
   
   // === COLOR INTENSITY (varies dramatically) ===
-  // 50% chance of extra saturation boost
-  const satBoost = R() < 0.5 ? 0.15 : 0.0;
-  const colorIntensity = 0.6 + R() * 0.4 + satBoost; // 0.6 to 1.15
-  const colorShift = (R() - 0.5) * 80;    // -40 to +40 hue shift
+  const satBoost = R() < 0.4 ? 0.2 : (R() < 0.7 ? 0 : -0.15);
+  const colorIntensity = 0.45 + R() * 0.7 + satBoost; // 0.45 to 1.35
+  const colorShift = (R() - 0.5) * 140;    // -70 to +70 hue shift (was ±40)
   
-  // === BRIGHTNESS/CONTRAST ===
-  const brightness = 0.7 + R() * 0.6;     // 0.7 to 1.3
+  // === BRIGHTNESS/CONTRAST (wider range) ===
+  const brightness = 0.5 + R() * 0.9;     // 0.5 to 1.4 (was 0.7-1.3)
   
   // === BASE CONFIG (all zeroed - styles add their own) ===
   C = {
@@ -121,13 +128,13 @@ function gen(s) {
     zone: zone,
     bgType: bgType,
     brightness: brightness,
-    // Colors with more variation
-    h1: pal[0] + colorShift + (R()-.5)*70,
-    h2: pal[1] + colorShift + (R()-.5)*70,
-    h3: pal[2] + colorShift + (R()-.5)*80,
+    // Colors with maximum variation - each color gets independent shift
+    h1: pal[0] + colorShift + (R()-.5)*120,
+    h2: pal[1] + (R()-.5)*100 + (R()-.5)*80,  // independent of colorShift
+    h3: pal[2] + (R()-.5)*140,                 // fully independent
     colorIntensity: colorIntensity,
-    // All effects start at 0
-    clusters: 0, density: 0, pixelSize: 3, scatter: 0,
+    // All effects start at 0 (pixelSize gets randomized baseline)
+    clusters: 0, density: 0, pixelSize: 2 + Math.floor(R() * 4), scatter: 0,
     glitchAmt: 0, rectGlitch: 0, diagStreak: 0,
     spireCount: 0, spireIntensity: 0, gridIntensity: 0, horizonGlow: 0, bandGlitch: 0,
     spireSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
@@ -145,12 +152,14 @@ function gen(s) {
     bgNoiseScale: 5 + R() * 20
   };
   
-  // === ZONE OFFSETS ===
-  if (zone === 'top') { C.zoneOffsetY = 0.3 + R() * 0.2; }
-  else if (zone === 'bottom') { C.zoneOffsetY = -0.3 - R() * 0.2; }
-  else if (zone === 'left') { C.zoneOffsetX = -0.3 - R() * 0.2; }
-  else if (zone === 'right') { C.zoneOffsetX = 0.3 + R() * 0.2; }
-  else if (zone === 'edges') { C.zoneOffsetX = (R() < 0.5 ? -1 : 1) * (0.4 + R() * 0.2); }
+  // === ZONE OFFSETS (more dramatic positioning) ===
+  if (zone === 'top') { C.zoneOffsetY = 0.25 + R() * 0.35; }
+  else if (zone === 'bottom') { C.zoneOffsetY = -0.25 - R() * 0.35; }
+  else if (zone === 'left') { C.zoneOffsetX = -0.25 - R() * 0.35; }
+  else if (zone === 'right') { C.zoneOffsetX = 0.25 + R() * 0.35; }
+  else if (zone === 'edges') { C.zoneOffsetX = (R() < 0.5 ? -1 : 1) * (0.35 + R() * 0.3); }
+  else if (zone === 'center') { C.zoneOffsetX = (R() - 0.5) * 0.2; C.zoneOffsetY = (R() - 0.5) * 0.2; }
+  else if (zone === 'scattered') { C.zoneOffsetX = (R() - 0.5) * 0.5; C.zoneOffsetY = (R() - 0.5) * 0.5; }
   
   // === STYLE-SPECIFIC OVERRIDES (with A/B/C sub-variants) ===
   if (style === 'synthwave') {
@@ -415,27 +424,40 @@ function gen(s) {
     if (R() < 0.2) C.mirrorAmt = 0.7 + R() * 0.3;
   }
   
-  // === WILD CARD MUTATIONS (3-5% chance each, stacking) ===
-  if (R() < 0.04) C.mirrorAmt = 1.0;
-  if (R() < 0.04) C.chromaAmt += 0.35;
-  if (R() < 0.04) C.pixelSize = 8 + Math.floor(R() * 5);
-  if (R() < 0.04) C.grainAmt += 0.18;
-  if (R() < 0.04) C.dataBlocks += 4;
-  if (R() < 0.04) C.crtAmt += 0.45;
-  if (R() < 0.04) C.invertAmt = 0.85 + R() * 0.15;
-  if (R() < 0.04) C.edgeGlow += 0.45;
-  if (R() < 0.04) C.vhsAmt += 0.35;
-  if (R() < 0.04) C.posterize = 2 + Math.floor(R() * 2);
-  if (R() < 0.03) { C.density = 0.85; C.scatter = 0.7; }
-  if (R() < 0.03) { C.clusters = 5; C.spireCount = 7; }
-  if (R() < 0.03) C.marbleAmt += 0.35;
-  if (R() < 0.03) C.noiseWarp += 0.3;
-  if (R() < 0.02) { C.isoCubes = 8; C.isoRgbSplit = 0.035; }
-  if (R() < 0.02) { C.geoShapes = 8; }
-  if (R() < 0.02) { C.h1 += 180; } // hue flip
-  if (R() < 0.02) { C.colorIntensity = 0.3; } // desaturated
-  if (R() < 0.02) { C.brightness = 1.4; } // blown out
-  if (R() < 0.02) { C.brightness = 0.5; } // dark
+  // === WILD CARD MUTATIONS (8-15% chance each, stacking for uniqueness) ===
+  if (R() < 0.12) C.mirrorAmt = 0.85 + R() * 0.15;
+  if (R() < 0.10) C.chromaAmt += 0.25 + R() * 0.3;
+  if (R() < 0.08) C.pixelSize = 1 + Math.floor(R() * 12);  // can go tiny or huge
+  if (R() < 0.10) C.grainAmt += 0.1 + R() * 0.2;
+  if (R() < 0.10) C.crtAmt += 0.3 + R() * 0.4;
+  if (R() < 0.08) C.invertAmt = 0.7 + R() * 0.3;
+  if (R() < 0.10) C.edgeGlow += 0.3 + R() * 0.4;
+  if (R() < 0.10) C.vhsAmt += 0.25 + R() * 0.35;
+  if (R() < 0.08) C.posterize = 2 + Math.floor(R() * 4);
+  if (R() < 0.08) { C.density = 0.6 + R() * 0.35; C.scatter = 0.5 + R() * 0.4; }
+  if (R() < 0.08) { C.clusters = 3 + Math.floor(R() * 3); C.spireCount = 4 + Math.floor(R() * 4); }
+  if (R() < 0.08) C.marbleAmt += 0.25 + R() * 0.35;
+  if (R() < 0.08) C.noiseWarp += 0.2 + R() * 0.25;
+  if (R() < 0.06) { C.isoCubes = 5 + Math.floor(R() * 5); C.isoRgbSplit = 0.025 + R() * 0.02; }
+  if (R() < 0.06) { C.geoShapes = 5 + Math.floor(R() * 5); }
+  if (R() < 0.08) { C.h1 += 90 + R() * 180; } // partial to full hue rotation
+  if (R() < 0.06) { C.h2 += 120; C.h3 -= 60; } // split complements
+  if (R() < 0.05) { C.colorIntensity = 0.2 + R() * 0.3; } // desaturated
+  if (R() < 0.05) { C.colorIntensity = 1.1 + R() * 0.3; } // hypersaturated
+  if (R() < 0.05) { C.brightness = 1.3 + R() * 0.3; } // blown out
+  if (R() < 0.05) { C.brightness = 0.35 + R() * 0.2; } // very dark
+  if (R() < 0.08) C.dripIntensity += 0.2 + R() * 0.3;
+  if (R() < 0.08) C.auroraAmt += 0.2 + R() * 0.3;
+  if (R() < 0.08) C.rippleAmt += 0.2 + R() * 0.25;
+  if (R() < 0.08) C.hSortAmt += 0.2 + R() * 0.3;
+  if (R() < 0.06) C.bandGlitch += 0.25 + R() * 0.3;
+  if (R() < 0.06) C.gridIntensity += 0.15 + R() * 0.25;
+  if (R() < 0.06) C.horizonGlow += 0.15 + R() * 0.2;
+  if (R() < 0.04) { C.spireIntensity = 0.6 + R() * 0.35; C.spireCount = 6 + Math.floor(R() * 3); }
+  // Rare combos
+  if (R() < 0.03) { C.mirrorAmt = 1.0; C.chromaAmt += 0.4; C.edgeGlow += 0.5; }
+  if (R() < 0.03) { C.crtAmt = 0.8; C.vhsAmt = 0.6; C.posterize = 3; }
+  if (R() < 0.03) { C.marbleAmt = 0.5; C.rippleAmt = 0.4; C.auroraAmt = 0.4; }
   
   // Display style info
   document.getElementById('seed-num').textContent = seed + ' [' + style + '-' + subStyle + '] ' + zone;
