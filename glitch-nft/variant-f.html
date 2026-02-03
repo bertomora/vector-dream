@@ -1018,49 +1018,133 @@ void main(){
   // Apply brightness
   col *= brightness;
   
-  // === VARIANT F: DATABEND / VERTICAL MELT ===
+  // === VARIANT F: PLASMA STORM / ELECTRIC ARCS ===
   
-  // Vertical pixel stretching zones
-  float stretchX = floor(puv.x * 40.0);
-  float stretchSeed = H(vec2(stretchX, floor(t * 0.2)));
-  float stretchStart = H(vec2(stretchX, 1.0));
-  float stretchLen = 0.2 + H(vec2(stretchX, 2.0)) * 0.5;
-  
-  float inStretch = step(0.7, stretchSeed) * step(stretchStart, puv.y) * step(puv.y, stretchStart + stretchLen);
-  float stretchProgress = (puv.y - stretchStart) / stretchLen;
-  vec3 stretchCol = mix(c1, c2, H(vec2(stretchX, 3.0)));
-  stretchCol *= 0.7 + stretchProgress * 0.4;
-  col = mix(col, stretchCol, inStretch * 0.8);
-  
-  // Horizontal data corruption bands
-  float corruptY = floor(puv.y * 60.0);
-  float corruptSeed = H(vec2(corruptY, floor(t * 0.3)));
-  float isCorrupt = step(0.85, corruptSeed);
-  
-  float corruptType = H(vec2(corruptY, 20.0));
-  vec3 corruptCol = corruptType < 0.33 ? col.gbr : (corruptType < 0.66 ? col.brg : col);
-  corruptCol *= 0.8 + H(vec2(corruptY, 30.0)) * 0.4;
-  col = mix(col, corruptCol, isCorrupt);
-  
-  // Vertical drip/melt lines
-  for(int d = 0; d < 8; d++) {
-    float fd = float(d);
-    float dripX = H(vec2(fd, 50.0 + floor(t * 0.1)));
-    float dripW = 0.005 + H(vec2(fd, 51.0)) * 0.01;
-    float dripStart2 = H(vec2(fd, 52.0)) * 0.5;
-    float dripEnd = dripStart2 + 0.3 + H(vec2(fd, 53.0)) * 0.4;
+  // Energy nodes - draw each one directly (no array indexing)
+  for(int n = 0; n < 8; n++) {
+    float fn = float(n);
+    vec2 nodePos = vec2(H(vec2(fn, 700.0)) * 2.0 - 1.0, H(vec2(fn, 701.0)) * 2.0 - 1.0);
+    float nodeDist = length(p - nodePos);
+    float pulse = 0.5 + 0.5 * sin(t * 3.0 + fn * 1.5);
+    float nodeGlow = 0.02 / (nodeDist + 0.01) * pulse;
+    vec3 nodeCol = mix(c1, c2, H(vec2(fn, 750.0)));
+    col += nodeCol * nodeGlow * 0.3;
     
-    float inDrip = step(abs(puv.x - dripX), dripW) * step(dripStart2, puv.y) * step(puv.y, dripEnd);
-    float dripProgress2 = (puv.y - dripStart2) / (dripEnd - dripStart2);
-    vec3 dripCol = mix(c1, c3, H(vec2(fd, 54.0)));
-    dripCol *= 1.0 - dripProgress2 * 0.3;
-    col = mix(col, dripCol, inDrip * 0.7);
+    // Bright core of node
+    if(nodeDist < 0.04) {
+      float core = 1.0 - nodeDist / 0.04;
+      col += vec3(1.0, 0.95, 0.9) * core * core * pulse;
+    }
   }
   
-  // Glitch displacement blocks
-  vec2 blockID = floor(puv * 15.0);
-  float blockGlitch = step(0.92, H(blockID + floor(t * 0.4)));
-  col = mix(col, vec3(1.0) - col, blockGlitch);
+  // Lightning bolts - fully randomized start/end positions per bolt
+  for(int bolt = 0; bolt < 6; bolt++) {
+    float fbolt = float(bolt);
+    
+    // Each bolt gets unique random start and end positions
+    vec2 start = vec2(
+      H(vec2(fbolt * 17.3, 710.0)) * 2.0 - 1.0,
+      H(vec2(fbolt * 17.3, 711.0)) * 2.0 - 1.0
+    );
+    vec2 end = vec2(
+      H(vec2(fbolt * 23.7, 712.0)) * 2.0 - 1.0,
+      H(vec2(fbolt * 23.7, 713.0)) * 2.0 - 1.0
+    );
+    
+    // Flicker on/off
+    float boltActive = step(0.3, H(vec2(fbolt, floor(t * 8.0))));
+    
+    // Jagged bolt segments
+    for(int seg = 0; seg < 10; seg++) {
+      float fseg = float(seg);
+      float t1 = fseg / 10.0;
+      float t2 = (fseg + 1.0) / 10.0;
+      
+      float jag1 = (H(vec2(fbolt * 100.0 + fseg, floor(t * 6.0))) - 0.5) * 0.2;
+      float jag2 = (H(vec2(fbolt * 100.0 + fseg + 1.0, floor(t * 6.0))) - 0.5) * 0.2;
+      
+      vec2 p1 = mix(start, end, t1);
+      vec2 p2 = mix(start, end, t2);
+      
+      vec2 dir = end - start;
+      float dirLen = length(dir);
+      if(dirLen > 0.01) {
+        dir = dir / dirLen;
+        vec2 perp = vec2(-dir.y, dir.x);
+        p1 += perp * jag1;
+        p2 += perp * jag2;
+      }
+      
+      // Distance to segment
+      vec2 pa = p - p1;
+      vec2 ba = p2 - p1;
+      float baLen = dot(ba, ba);
+      float hh = 0.0;
+      if(baLen > 0.0001) hh = clamp(dot(pa, ba) / baLen, 0.0, 1.0);
+      float segDist = length(pa - ba * hh);
+      
+      // Pick bolt color from palette based on bolt index
+      vec3 boltColor = c1;
+      float colPick = H(vec2(fbolt, 820.0));
+      if(colPick < 0.25) boltColor = c1;
+      else if(colPick < 0.5) boltColor = c2;
+      else if(colPick < 0.75) boltColor = c3;
+      else boltColor = mix(c1, c2, 0.5);
+      
+      // Glow (thinner)
+      float boltGlow = 0.003 / (segDist + 0.002) * boltActive;
+      col += boltColor * boltGlow * 0.15;
+      
+      // Core (much thinner, colored)
+      float coreVis = step(segDist, 0.002) * boltActive;
+      col = mix(col, boltColor + vec3(0.3), coreVis * 0.95);
+    }
+  }
+  
+  // Plasma fog
+  float plasma1 = sin(p.x * 4.0 + t * 0.5) * cos(p.y * 3.0 + t * 0.4);
+  float plasma2 = sin(p.x * 7.0 - t * 0.3) * cos(p.y * 5.0 + t * 0.6);
+  float plasma3 = sin((p.x + p.y) * 6.0 + t * 0.7);
+  float plasma = (plasma1 + plasma2 + plasma3) / 3.0 * 0.5 + 0.5;
+  col += mix(c1, c2, plasma) * plasma * 0.2;
+  
+  // Spark particles shooting outward
+  for(int spark = 0; spark < 25; spark++) {
+    float fspark = float(spark);
+    float sparkTime = fract(t * 0.5 + H(vec2(fspark, 850.0)));
+    
+    // Origin from a node position
+    float srcIdx = mod(fspark, 8.0);
+    vec2 sparkStart = vec2(H(vec2(srcIdx, 700.0)) * 2.0 - 1.0, H(vec2(srcIdx, 701.0)) * 2.0 - 1.0);
+    
+    vec2 sparkDir = normalize(vec2(H(vec2(fspark, 851.0)) - 0.5, H(vec2(fspark, 852.0)) - 0.5) + 0.001);
+    vec2 sparkPos = sparkStart + sparkDir * sparkTime * 0.7;
+    float sparkDist = length(p - sparkPos);
+    
+    float sparkVis = step(sparkDist, 0.015) * (1.0 - sparkTime);
+    col += vec3(1.0, 0.9, 0.7) * sparkVis * 0.7;
+  }
+  
+  // Electric static flicker
+  float haze = H(pxCoord + floor(t * 12.0));
+  col += c1 * step(0.93, haze) * 0.25;
+  
+  // Energy ripples
+  for(int rip = 0; rip < 4; rip++) {
+    float frip = float(rip);
+    float ripIdx = mod(frip * 2.0, 8.0);
+    vec2 ripCenter = vec2(H(vec2(ripIdx, 700.0)) * 2.0 - 1.0, H(vec2(ripIdx, 701.0)) * 2.0 - 1.0);
+    
+    float ripTime = fract(t * 0.25 + frip * 0.25);
+    float ripRadius = ripTime * 0.5;
+    float ripDist = length(p - ripCenter);
+    
+    float ripple = max(0.0, 1.0 - abs(ripDist - ripRadius) * 25.0) * (1.0 - ripTime);
+    col += mix(c1, c2, frip * 0.25) * ripple * 0.35;
+  }
+  
+  // Cool energy tint
+  col *= vec3(0.92, 0.96, 1.08);
   
   col = clamp(col, 0.0, 1.0);
   

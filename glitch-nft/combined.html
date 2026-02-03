@@ -84,6 +84,10 @@ function gen(s) {
   else if (bgRoll < 0.7) bgType = 'gradient';
   else bgType = 'textured';
   
+  // === OVERLAY VARIANT (0=none, 1=A scanlines, 2=B rgb split, 3=C led, 4=D hud, 5=E vhs, 6=F plasma) ===
+  const variantNames = ['none', 'scanlines', 'rgb-split', 'led-matrix', 'cyber-hud', 'vhs', 'plasma'];
+  const variant = Math.floor(R() * 7);
+  
   // === EXPANDED COLOR PALETTES (16 options) ===
   const pals = [
     [330, 185, 0],     // pink/cyan/red
@@ -120,6 +124,8 @@ function gen(s) {
     subStyle: subStyle,
     zone: zone,
     bgType: bgType,
+    variant: variant,
+    variantName: variantNames[variant],
     brightness: brightness,
     // Colors with more variation
     h1: pal[0] + colorShift + (R()-.5)*70,
@@ -438,7 +444,7 @@ function gen(s) {
   if (R() < 0.02) { C.brightness = 0.5; } // dark
   
   // Display style info
-  document.getElementById('seed-num').textContent = seed + ' [' + style + '-' + subStyle + '] ' + zone;
+  document.getElementById('seed-num').textContent = seed + ' [' + style + '-' + subStyle + '] ' + zone + ' +' + variantNames[variant];
 }
 gen(seed);
 
@@ -467,6 +473,7 @@ uniform float primSeeds[5];
 uniform float zoneOffsetX,zoneOffsetY,bgGradientAngle,bgNoiseScale;
 uniform float colorIntensity,brightness;
 uniform int bgType; // 0=solid, 1=gradient, 2=textured
+uniform int variant; // 0=none, 1=scanlines, 2=rgb-split, 3=led, 4=hud, 5=vhs, 6=plasma
 
 #define PI 3.14159265
 #define TAU 6.28318531
@@ -662,8 +669,48 @@ void main(){
     else col = c2 * (0.5 + noiseRand2);
   }
   
-  // === RECTANGULAR GLITCH OUTLINES === (disabled)
-  // for(int i = 0; i < 6; i++) { ... }
+  // === RECTANGULAR GLITCH OUTLINES ===
+  for(int i = 0; i < 6; i++) {
+    float fi = float(i);
+    // Use hash with shapeSeeds for per-generation randomization
+    float rs = shapeSeeds[i] + fi * 100.0;
+    float rectSeed = H(vec2(fi + fract(rs * 0.01), floor(t * 0.5)));
+    if(rectSeed > 1.0 - rectGlitch) {
+      // Randomized movement direction and speed per block
+      float moveAngle = fract(rs * 0.00123) * 6.28;
+      float moveSpeed = 0.05 + fract(rs * 0.00234) * 0.2;
+      float moveAmt = fract(rs * 0.00345) * 0.5;
+      
+      vec2 rectPos = vec2(
+        (fract(rs * 0.001) - 0.5) * 2.0 + sin(t * moveSpeed + fi) * moveAmt * cos(moveAngle),
+        (fract(rs * 0.002) - 0.5) * 2.0 + sin(t * moveSpeed + fi) * moveAmt * sin(moveAngle)
+      );
+      
+      // Much more varied sizes (tiny to large)
+      vec2 rectSize = vec2(
+        0.02 + fract(rs * 0.003) * 0.35,
+        0.02 + fract(rs * 0.004) * 0.25
+      );
+      
+      // Random rotation per block
+      float rectRot = fract(rs * 0.005) * 0.5 - 0.25;
+      vec2 rp = p - rectPos;
+      float cr = cos(rectRot); float sr = sin(rectRot);
+      rp = vec2(rp.x * cr - rp.y * sr, rp.x * sr + rp.y * cr);
+      
+      // Rectangle outline check
+      vec2 d = abs(rp) - rectSize;
+      float outline = max(d.x, d.y);
+      float innerOutline = max(d.x + pxSize * 2.0, d.y + pxSize * 2.0);
+      
+      if(outline < 0.0 && innerOutline > 0.0) {
+        float rectColSel = fract(rs * 0.006);
+        if(rectColSel < 0.33) col = c1;
+        else if(rectColSel < 0.66) col = c2;
+        else col = c3;
+      }
+    }
+  }
   
   // === SYNTHWAVE BAND GLITCHES (chunky horizontal tears, seed-controlled) ===
   if(bandGlitch > 0.05) {
@@ -828,8 +875,86 @@ void main(){
     }
   }
   
-  // === SHARP DATA BLOCKS === (disabled)
-  // for(int db = 0; db < 5; db++) { ... }
+  // === SHARP DATA BLOCKS ===
+  for(int db = 0; db < 5; db++) {
+    if(float(db) >= dataBlocks) break;
+    float fdb = float(db);
+    float bs = blockSeeds[db];
+    
+    // Use hash function for better randomization
+    float r1 = H(vec2(bs, 1.0));
+    float r2 = H(vec2(bs, 2.0));
+    float r3 = H(vec2(bs, 3.0));
+    float r4 = H(vec2(bs, 4.0));
+    float r5 = H(vec2(bs, 5.0));
+    float r6 = H(vec2(bs, 6.0));
+    float r7 = H(vec2(bs, 7.0));
+    float r8 = H(vec2(bs, 8.0));
+    
+    // Fully random position across canvas
+    vec2 blockPos = vec2(
+      (r1 - 0.5) * 2.4,
+      (r2 - 0.5) * 2.4
+    );
+    
+    // Wildly varied sizes
+    float widthRand = r3;
+    float heightRand = r4;
+    vec2 blockSize = vec2(
+      0.03 + widthRand * widthRand * 0.4,  // squared for more variation
+      0.03 + heightRand * heightRand * 0.35
+    );
+    
+    // Random rotation
+    float blockRot = (r5 - 0.5) * 1.2;
+    vec2 bp = p - blockPos;
+    float cbr = cos(blockRot); float sbr = sin(blockRot);
+    bp = vec2(bp.x * cbr - bp.y * sbr, bp.x * sbr + bp.y * cbr);
+    
+    // Check if inside block
+    vec2 blockDist = abs(bp) - blockSize;
+    if(blockDist.x < 0.0 && blockDist.y < 0.0) {
+      // Random color from palette - fully random selection
+      vec3 blockCol;
+      float colSel = r6;
+      if(colSel < 0.25) {
+        blockCol = c1;
+      } else if(colSel < 0.5) {
+        blockCol = c2;
+      } else if(colSel < 0.75) {
+        blockCol = c3;
+      } else {
+        blockCol = c4;
+      }
+      
+      // Random brightness variation
+      blockCol *= 0.6 + r7 * 0.6;
+      
+      // Random effect type
+      float effectType = r8;
+      if(effectType < 0.4) {
+        // Solid color
+        col = blockCol;
+      } else if(effectType < 0.6) {
+        // Color blend with existing
+        col = mix(col, blockCol, 0.8);
+      } else if(effectType < 0.8) {
+        // Inverted
+        col = vec3(1.0) - col;
+        col = mix(col, blockCol, 0.4);
+      } else {
+        // Shifted
+        col = col.gbr;
+        col = mix(col, blockCol, 0.5);
+      }
+      
+      // Block edge outline with random color
+      float edgeDist = min(abs(blockDist.x + blockSize.x), abs(blockDist.y + blockSize.y));
+      if(edgeDist < pxSize * 2.5) {
+        col = r6 < 0.5 ? c1 : c2;
+      }
+    }
+  }
   
   // === RADIAL CHROMATIC ABERRATION ===
   if(chromaAmt > 0.02) {
@@ -900,6 +1025,225 @@ void main(){
   // Apply brightness
   col *= brightness;
   
+  // === VARIANT OVERLAYS ===
+  
+  // VARIANT 1: SCANLINES + COLOR BLEED
+  if(variant == 1) {
+    float scanFreq = 200.0;
+    float scanPhase = puv.y * scanFreq;
+    float scanLine = sin(scanPhase * 3.14159);
+    float scanMask = smoothstep(-0.2, 0.5, scanLine);
+    col *= 0.5 + scanMask * 0.6;
+    float bleedAmt = 0.003;
+    float lineIdx = floor(scanPhase);
+    float bleedR = H(vec2(lineIdx, 1.0)) * bleedAmt;
+    float bleedB = H(vec2(lineIdx, 2.0)) * bleedAmt;
+    col.r *= 1.0 + sin((puv.y + bleedR) * scanFreq * 3.14159) * 0.15;
+    col.b *= 1.0 + sin((puv.y - bleedB) * scanFreq * 3.14159) * 0.15;
+    float interference = step(0.97, H(vec2(lineIdx, floor(t * 2.0))));
+    col += interference * vec3(0.3, 0.35, 0.4);
+    float bandNoise = H(vec2(floor(puv.y * 80.0), floor(t * 0.5))) * 0.08;
+    col += bandNoise;
+  }
+  
+  // VARIANT 2: RGB CHANNEL SEPARATION
+  if(variant == 2) {
+    float baseOffset = 0.012;
+    float distFromCenter = length(puv - 0.5);
+    float dynamicOffset = baseOffset * (1.0 + distFromCenter * 2.0);
+    vec2 redOffset = vec2(dynamicOffset, dynamicOffset * 0.3);
+    vec2 blueOffset = vec2(-dynamicOffset, -dynamicOffset * 0.2);
+    vec2 redUV = puv + redOffset;
+    vec2 blueUV = puv + blueOffset;
+    float redGhost = H(floor(redUV * res.x / pixelSize) + floor(t));
+    float blueGhost = H(floor(blueUV * res.x / pixelSize) + floor(t));
+    vec3 shifted;
+    shifted.r = col.r * 0.7 + (redGhost < 0.5 ? col.g : col.r) * 0.4;
+    shifted.g = col.g;
+    shifted.b = col.b * 0.7 + (blueGhost < 0.5 ? col.g : col.b) * 0.4;
+    col.r += smoothstep(0.3, 0.6, distFromCenter) * 0.2;
+    col.b += smoothstep(0.2, 0.5, distFromCenter) * 0.15;
+    col.g *= 0.95;
+    col = mix(col, shifted, 0.6);
+    float streak = sin((puv.x + puv.y) * 50.0 + t * 0.5) * 0.5 + 0.5;
+    col.r += streak * 0.05;
+    col.b += (1.0 - streak) * 0.05;
+  }
+  
+  // VARIANT 3: LED MATRIX / DOT GRID
+  if(variant == 3) {
+    float gridScale = 4.0;
+    vec2 gridPos = puv * res.x / gridScale;
+    vec2 gridUV = fract(gridPos);
+    vec2 gridID = floor(gridPos);
+    float dotDist = length(gridUV - 0.5);
+    float dotMask = smoothstep(0.45, 0.25, dotDist);
+    float gridLine = step(0.1, gridUV.x) * step(gridUV.x, 0.9) * step(0.1, gridUV.y) * step(gridUV.y, 0.9);
+    col *= dotMask * gridLine * 1.3 + 0.1;
+    float subX = mod(gridID.x, 3.0);
+    vec3 subpixelMask = vec3(subX < 1.0 ? 1.3 : 0.8, (subX >= 1.0 && subX < 2.0) ? 1.3 : 0.8, subX >= 2.0 ? 1.3 : 0.8);
+    col *= subpixelMask;
+    float glowDot = smoothstep(0.5, 0.2, dotDist) * 0.2;
+    col += col * glowDot;
+    float dotVar = H(gridID) * 0.1;
+    col *= 0.95 + dotVar;
+    float ghost = H(gridID + vec2(floor(t * 0.5), 0.0)) * 0.08;
+    col += ghost;
+  }
+  
+  // VARIANT 4: CYBER HUD OVERLAY
+  if(variant == 4) {
+    vec3 hudCol = c1 * 0.8;
+    float hudAlpha = 0.0;
+    float bracketSize = 0.12;
+    float bracketThick = 0.006;
+    // Corner brackets
+    for(int corner = 0; corner < 4; corner++) {
+      vec2 cornerPos = vec2(corner < 2 ? bracketSize : 1.0 - bracketSize, (corner == 0 || corner == 2) ? bracketSize : 1.0 - bracketSize);
+      vec2 toCorner = puv - cornerPos;
+      vec2 absTC = abs(toCorner);
+      float hLine = step(absTC.y, bracketThick) * step(absTC.x, bracketSize * 0.5);
+      float vLine = step(absTC.x, bracketThick) * step(absTC.y, bracketSize * 0.5);
+      hudAlpha = max(hudAlpha, hLine + vLine);
+    }
+    // Crosshair
+    float crossSize = 0.04;
+    float crossGap = 0.015;
+    vec2 cp = abs(puv - 0.5);
+    float crossH = step(cp.y, bracketThick * 0.7) * step(crossGap, cp.x) * step(cp.x, crossSize);
+    float crossV = step(cp.x, bracketThick * 0.7) * step(crossGap, cp.y) * step(cp.y, crossSize);
+    hudAlpha = max(hudAlpha, crossH + crossV);
+    // Scanning line
+    float scanY = fract(t * 0.1);
+    float scanLine2 = smoothstep(0.01, 0.0, abs(puv.y - scanY)) * 0.5;
+    hudAlpha = max(hudAlpha, scanLine2);
+    // Grid
+    float gridH = step(0.98, fract(puv.y * 20.0));
+    float gridV = step(0.98, fract(puv.x * 20.0));
+    hudAlpha = max(hudAlpha, (gridH + gridV) * 0.15);
+    // Edge ticks
+    float tickL = step(puv.x, 0.02) * step(0.9, fract(puv.y * 30.0)) * 0.6;
+    float tickR = step(0.98, puv.x) * step(0.9, fract(puv.y * 30.0)) * 0.6;
+    float tickT = step(0.98, puv.y) * step(0.9, fract(puv.x * 30.0)) * 0.6;
+    float tickB = step(puv.y, 0.02) * step(0.9, fract(puv.x * 30.0)) * 0.6;
+    hudAlpha = max(hudAlpha, tickL + tickR + tickT + tickB);
+    col = mix(col, hudCol, hudAlpha * 0.9);
+  }
+  
+  // VARIANT 5: VHS TAPE DAMAGE
+  if(variant == 5) {
+    float trackingY = fract(t * 0.15);
+    float trackingBand = smoothstep(0.08, 0.0, abs(puv.y - trackingY));
+    if(trackingBand > 0.3) {
+      col = col.gbr;
+      col *= 1.0 + trackingBand * 0.3;
+    }
+    for(int i = 0; i < 5; i++) {
+      float fi = float(i);
+      float bandY = fract(fi * 0.2 + t * 0.05 + H(vec2(fi, floor(t * 0.3))));
+      float bandH = 0.01 + H(vec2(fi, 100.0)) * 0.02;
+      float inBand = smoothstep(bandH, 0.0, abs(puv.y - bandY));
+      float noise = H(pxCoord + vec2(fi * 50.0, floor(t * 30.0)));
+      col = mix(col, vec3(noise), inBand * 0.7);
+    }
+    float rollY = 0.92 + sin(t * 0.3) * 0.05;
+    if(puv.y > rollY) {
+      float rollAmt = (puv.y - rollY) / (1.0 - rollY);
+      col *= 1.0 - rollAmt * 0.8;
+      col = mix(col, col.brg, rollAmt);
+      float rollNoise = H(pxCoord + floor(t * 20.0)) * rollAmt;
+      col += rollNoise * 0.4;
+    }
+    float tapeNoise = H(pxCoord + floor(t * 15.0));
+    col += (tapeNoise - 0.5) * 0.08;
+    col.r *= 1.05;
+    col.b *= 0.95;
+    if(puv.y < 0.03) {
+      float switchNoise = H(vec2(pxCoord.x, floor(t * 25.0)));
+      col = mix(col, vec3(switchNoise), 0.8);
+    }
+  }
+  
+  // VARIANT 6: PLASMA STORM / ELECTRIC ARCS
+  if(variant == 6) {
+    // Energy nodes
+    for(int n = 0; n < 8; n++) {
+      float fn = float(n);
+      vec2 nodePos = vec2(H(vec2(fn, 700.0)) * 2.0 - 1.0, H(vec2(fn, 701.0)) * 2.0 - 1.0);
+      float nodeDist = length(p - nodePos);
+      float pulse = 0.5 + 0.5 * sin(t * 3.0 + fn * 1.5);
+      float nodeGlow = 0.02 / (nodeDist + 0.01) * pulse;
+      vec3 nodeCol = mix(c1, c2, H(vec2(fn, 750.0)));
+      col += nodeCol * nodeGlow * 0.3;
+      if(nodeDist < 0.04) {
+        float core = 1.0 - nodeDist / 0.04;
+        col += vec3(1.0, 0.95, 0.9) * core * core * pulse;
+      }
+    }
+    // Lightning bolts
+    for(int bolt = 0; bolt < 6; bolt++) {
+      float fbolt = float(bolt);
+      vec2 boltStart = vec2(H(vec2(fbolt * 17.3, 710.0)) * 2.0 - 1.0, H(vec2(fbolt * 17.3, 711.0)) * 2.0 - 1.0);
+      vec2 boltEnd = vec2(H(vec2(fbolt * 23.7, 712.0)) * 2.0 - 1.0, H(vec2(fbolt * 23.7, 713.0)) * 2.0 - 1.0);
+      float boltActive = step(0.3, H(vec2(fbolt, floor(t * 8.0))));
+      for(int seg = 0; seg < 10; seg++) {
+        float fseg = float(seg);
+        float t1 = fseg / 10.0;
+        float t2 = (fseg + 1.0) / 10.0;
+        float jag1 = (H(vec2(fbolt * 100.0 + fseg, floor(t * 6.0))) - 0.5) * 0.2;
+        float jag2 = (H(vec2(fbolt * 100.0 + fseg + 1.0, floor(t * 6.0))) - 0.5) * 0.2;
+        vec2 p1 = mix(boltStart, boltEnd, t1);
+        vec2 p2 = mix(boltStart, boltEnd, t2);
+        vec2 bdir = boltEnd - boltStart;
+        float bdirLen = length(bdir);
+        if(bdirLen > 0.01) {
+          bdir = bdir / bdirLen;
+          vec2 bperp = vec2(-bdir.y, bdir.x);
+          p1 += bperp * jag1;
+          p2 += bperp * jag2;
+        }
+        vec2 pa = p - p1;
+        vec2 ba = p2 - p1;
+        float baLen = dot(ba, ba);
+        float hh = 0.0;
+        if(baLen > 0.0001) hh = clamp(dot(pa, ba) / baLen, 0.0, 1.0);
+        float segDist = length(pa - ba * hh);
+        vec3 boltColor = c1;
+        float colPick = H(vec2(fbolt, 820.0));
+        if(colPick < 0.25) boltColor = c1;
+        else if(colPick < 0.5) boltColor = c2;
+        else if(colPick < 0.75) boltColor = c3;
+        else boltColor = mix(c1, c2, 0.5);
+        float boltGlow = 0.003 / (segDist + 0.002) * boltActive;
+        col += boltColor * boltGlow * 0.15;
+        float coreVis = step(segDist, 0.002) * boltActive;
+        col = mix(col, boltColor + vec3(0.3), coreVis * 0.95);
+      }
+    }
+    // Plasma fog
+    float plasma1 = sin(p.x * 4.0 + t * 0.5) * cos(p.y * 3.0 + t * 0.4);
+    float plasma2 = sin(p.x * 7.0 - t * 0.3) * cos(p.y * 5.0 + t * 0.6);
+    float plasma3 = sin((p.x + p.y) * 6.0 + t * 0.7);
+    float plasma = (plasma1 + plasma2 + plasma3) / 3.0 * 0.5 + 0.5;
+    col += mix(c1, c2, plasma) * plasma * 0.2;
+    // Spark particles
+    for(int spark = 0; spark < 15; spark++) {
+      float fspark = float(spark);
+      float sparkTime = fract(t * 0.5 + H(vec2(fspark, 850.0)));
+      float srcIdx = mod(fspark, 8.0);
+      vec2 sparkStart = vec2(H(vec2(srcIdx, 700.0)) * 2.0 - 1.0, H(vec2(srcIdx, 701.0)) * 2.0 - 1.0);
+      vec2 sparkDir = normalize(vec2(H(vec2(fspark, 851.0)) - 0.5, H(vec2(fspark, 852.0)) - 0.5) + 0.001);
+      vec2 sparkPos = sparkStart + sparkDir * sparkTime * 0.7;
+      float sparkDist = length(p - sparkPos);
+      float sparkVis = step(sparkDist, 0.015) * (1.0 - sparkTime);
+      col += vec3(1.0, 0.9, 0.7) * sparkVis * 0.7;
+    }
+    // Electric static
+    float haze = H(pxCoord + floor(t * 12.0));
+    col += c1 * step(0.93, haze) * 0.25;
+    col *= vec3(0.92, 0.96, 1.08);
+  }
+  
   col = clamp(col, 0.0, 1.0);
   
   gl_FragColor = vec4(col, 1.0);
@@ -936,7 +1280,7 @@ const unis = {t:U('t'),res:U('res'),h1:U('h1'),h2:U('h2'),h3:U('h3'),
   shapeSeeds:U('shapeSeeds'),isoCubes:U('isoCubes'),isoSize:U('isoSize'),
   isoRgbSplit:U('isoRgbSplit'),cubeSeeds:U('cubeSeeds'),primSeeds:U('primSeeds'),zoneOffsetX:U('zoneOffsetX'),
   zoneOffsetY:U('zoneOffsetY'),bgGradientAngle:U('bgGradientAngle'),bgNoiseScale:U('bgNoiseScale'),
-  colorIntensity:U('colorIntensity'),brightness:U('brightness'),bgType:U('bgType')};
+  colorIntensity:U('colorIntensity'),brightness:U('brightness'),bgType:U('bgType'),variant:U('variant')};
 
 canvas.width = 1000; canvas.height = 1000;
 gl.viewport(0, 0, 1000, 1000);
@@ -998,6 +1342,7 @@ function render(time) {
   gl.uniform1f(unis.colorIntensity, C.colorIntensity);
   gl.uniform1f(unis.brightness, C.brightness);
   gl.uniform1i(unis.bgType, C.bgType === 'gradient' ? 1 : (C.bgType === 'textured' ? 2 : 0));
+  gl.uniform1i(unis.variant, C.variant);
   
   gl.drawArrays(gl.TRIANGLES, 0, 6);
   requestAnimationFrame(render);
