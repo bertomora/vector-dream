@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# Arweave
+arweave-wallet.json
+*.arweave
+
+# Deployment artifacts
+.arweave-url
+.deployment.json
+.mints.json
+
+# Hardhat
+cache/
+artifacts/
+typechain-types/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

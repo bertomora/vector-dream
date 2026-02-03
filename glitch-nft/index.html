@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>VΞCTOR DRΞΛM</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    body { background: #000; overflow: hidden; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    canvas { display: block; width: 1200px; height: 1200px; max-width: 95vmin; max-height: 95vmin; image-rendering: pixelated; }
+    #ui {
+      position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 12px; align-items: center; z-index: 100;
+      background: rgba(0,0,0,0.9); padding: 10px 20px; border: 1px solid #f0f3;
+    }
+    #ui button { background: transparent; border: 1px solid #0ff; color: #0ff; padding: 6px 14px; font: 10px monospace; cursor: pointer; }
+    #ui button:hover { background: #0ff1; }
+    .info { color: #f0f8; font-size: 9px; }
+    #hud { position: fixed; top: 15px; right: 15px; font-size: 9px; text-align: right; z-index: 100; color: #fff4; }
+    #hud .up { color: #0ff; } #hud .down { color: #f0f; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><div>BTC <span id="btc" class="up">---</span></div><div>ETH <span id="eth" class="up">---</span></div></div>
+<div id="ui"><div class="info">#<span id="seed-num">0</span></div><button id="randomize">GENERATE</button><button id="save">CAPTURE</button></div>
+
+<script>
+let M = { sent: 0, vol: 0.3 };
+async function fetchM() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+    const d = await r.json();
+    M.btc = d.bitcoin.usd_24h_change || 0; M.eth = d.ethereum.usd_24h_change || 0;
+    M.sent = Math.tanh((M.btc + M.eth) / 8);
+    M.vol = Math.min(1, (Math.abs(M.btc) + Math.abs(M.eth)) / 12);
+    document.getElementById('btc').textContent = (M.btc >= 0 ? '+' : '') + M.btc.toFixed(1) + '%';
+    document.getElementById('btc').className = M.btc >= 0 ? 'up' : 'down';
+    document.getElementById('eth').textContent = (M.eth >= 0 ? '+' : '') + M.eth.toFixed(1) + '%';
+    document.getElementById('eth').className = M.eth >= 0 ? 'up' : 'down';
+  } catch(e) {}
+}
+fetchM(); setInterval(fetchM, 45000);
+
+let seed = parseInt(new URLSearchParams(window.location.search).get('seed')) || Math.floor(Math.random() * 100000);
+function mulberry32(a) { return function() { let t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; } }
+
+let R, C;
+function gen(s) {
+  seed = s; R = mulberry32(seed);
+  const pals = [[330,185,0],[320,190,30],[340,175,200],[310,195,15],[350,170,280]];
+  const pal = pals[Math.floor(R() * pals.length)];
+  C = {
+    h1: pal[0] + (R()-.5)*30, h2: pal[1] + (R()-.5)*30, h3: pal[2] + (R()-.5)*40,
+    clusters: 2 + Math.floor(R() * 3),
+    density: 0.4 + R() * 0.4,
+    pixelSize: 3 + Math.floor(R() * 4),
+    scatter: 0.3 + R() * 0.4,
+    glitchAmt: 0.3 + R() * 0.5,
+    rectGlitch: 0.2 + R() * 0.4,
+    diagStreak: 0.2 + R() * 0.4,
+    // Synthwave elements
+    spireCount: Math.floor(R() * 6),           // 0-5 spires (sometimes none)
+    spireIntensity: 0.15 + R() * 0.35,         // how visible
+    gridIntensity: R() * 0.4,                  // 0 = no grid, 0.4 = strong grid
+    horizonGlow: R() * 0.25,                   // subtle gradient strength
+    bandGlitch: 0.1 + R() * 0.4,               // chunky horizontal tears
+    spireSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],  // unique per seed
+    // Pixel sort / data bend elements
+    dripIntensity: R() * 0.5,                  // vertical drip streaks
+    rippleAmt: R() * 0.4,                      // wave ripple texture
+    auroraAmt: R() * 0.35,                     // aurora color curtains
+    grainAmt: 0.05 + R() * 0.15               // extra dither/grain
+  };
+  document.getElementById('seed-num').textContent = seed;
+}
+gen(seed);
+
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl');
+
+const VS = `attribute vec2 p;varying vec2 uv;void main(){uv=p*.5+.5;gl_Position=vec4(p,0,1);}`;
+
+const FS = `
+precision highp float;
+varying vec2 uv;
+uniform float t;
+uniform vec2 res;
+uniform float h1,h2,h3,clusters,density,pixelSize,scatter,glitchAmt,rectGlitch,diagStreak;
+uniform float sent,vol;
+uniform float spireCount,spireIntensity,gridIntensity,horizonGlow,bandGlitch;
+uniform float spireSeeds[6];
+uniform float dripIntensity,rippleAmt,auroraAmt,grainAmt;
+
+#define PI 3.14159265
+#define TAU 6.28318531
+
+float H(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float H3(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+
+vec3 hsv(float h,float s,float v){
+  vec3 c=clamp(abs(mod(h*6.+vec3(0,4,2),6.)-3.)-1.,0.,1.);
+  return v*mix(vec3(1),c,s);
+}
+
+void main(){
+  // Pixelate UV
+  float pxSize = pixelSize / res.x;
+  vec2 puv = floor(uv / pxSize) * pxSize;
+  vec2 pxCoord = floor(uv * res.x / pixelSize);
+  
+  vec2 p = (puv - 0.5) * 2.0;
+  
+  // Deep black background with subtle synthwave gradient
+  vec3 col = vec3(0.01, 0.005, 0.015);
+  
+  // === SYNTHWAVE HORIZON GRADIENT (subtle, seed-controlled) ===
+  if(horizonGlow > 0.02) {
+    float horizonY = -0.3 + 0.1 * sin(t * 0.05);
+    if(p.y < horizonY + 0.4) {
+      float gradT = smoothstep(horizonY - 0.2, horizonY + 0.4, p.y);
+      vec3 deepTeal = vec3(0.02, 0.04, 0.06);
+      vec3 hGlow = hsv((h1 + 20.0) / 360.0, 0.6, horizonGlow);
+      col = mix(hGlow, deepTeal, gradT);
+    }
+  }
+  
+  // Colors
+  vec3 c1 = hsv((h1 + sent * 20.0) / 360.0, 0.95, 1.0);
+  vec3 c2 = hsv((h2 + sent * 15.0) / 360.0, 0.9, 1.0);
+  vec3 c3 = hsv((h3 + sent * 25.0) / 360.0, 0.85, 0.9);
+  vec3 c4 = hsv((h1 + 180.0) / 360.0, 0.8, 0.85); // Complementary
+  
+  // === SYNTHWAVE CRYSTAL SPIRES (seed-controlled) ===
+  float spireVis = spireIntensity + 0.1 * sent; // market influences
+  for(int i = 0; i < 6; i++) {
+    if(float(i) >= spireCount) break;
+    float fi = float(i);
+    float ss = spireSeeds[i]; // unique seed per spire
+    float spireX = (H(vec2(ss, 77.0)) - 0.5) * 2.2;
+    float spireWidth = 0.03 + H(vec2(ss, 78.0)) * 0.06;
+    float spireHeight = 0.3 + H(vec2(ss, 79.0)) * 0.5;
+    float spireBase = -0.9;
+    
+    // Jagged crystal shape
+    float inSpire = step(abs(p.x - spireX), spireWidth * (1.0 - (p.y - spireBase) / spireHeight));
+    inSpire *= step(spireBase, p.y) * step(p.y, spireBase + spireHeight);
+    
+    if(inSpire > 0.5) {
+      // Crystal facet shading
+      float facet = floor((p.y - spireBase) / 0.08);
+      float shade = 0.4 + 0.3 * H(vec2(ss, facet));
+      vec3 spireCol = mix(c1, c2, H(vec2(ss, 80.0))) * shade * spireVis;
+      
+      // Wireframe edge highlight
+      float edgeDist = abs(abs(p.x - spireX) - spireWidth * (1.0 - (p.y - spireBase) / spireHeight));
+      if(edgeDist < pxSize * 2.0) {
+        spireCol = c1 * 0.8;
+      }
+      col = max(col, spireCol);
+    }
+  }
+  
+  // === HORIZON WIREFRAME GRID (seed-controlled) ===
+  if(gridIntensity > 0.02) {
+    float gridY = -0.5;
+    if(p.y < gridY && p.y > -1.0) {
+      float perspective = 1.0 / (gridY - p.y + 0.1);
+      float gridX = p.x * perspective;
+      float gridZ = perspective * 0.5;
+      
+      // Grid lines
+      float lineX = smoothstep(0.02, 0.0, abs(fract(gridX * 0.8 + t * 0.1) - 0.5) - 0.45);
+      float lineZ = smoothstep(0.02, 0.0, abs(fract(gridZ * 2.0 + t * 0.3) - 0.5) - 0.45);
+      float grid = max(lineX, lineZ) * (gridIntensity + 0.1 * vol);
+      
+      vec3 gridCol = mix(c1, c2, 0.5) * grid * (1.0 - (gridY - p.y) * 0.8);
+      col = max(col, gridCol);
+    }
+  }
+  
+  // === PIXEL PARTICLE CLUSTERS ===
+  for(int c = 0; c < 5; c++) {
+    if(float(c) >= clusters) break;
+    float cf = float(c);
+    
+    // Cluster center
+    vec2 center = vec2(
+      sin(t * 0.1 * (1.0 + cf * 0.3) + cf * 2.5) * (0.35 + cf * 0.1),
+      cos(t * 0.08 * (1.0 + cf * 0.2) + cf * 1.8) * (0.3 + cf * 0.08)
+    );
+    
+    // Distance from cluster center
+    float dist = length(p - center);
+    
+    // Cluster shape - irregular blob
+    float clusterRadius = 0.35 + 0.15 * sin(t * 0.2 + cf);
+    float angle = atan(p.y - center.y, p.x - center.x);
+    clusterRadius += 0.1 * sin(angle * 5.0 + t + cf) + 0.05 * sin(angle * 8.0 - t * 0.5);
+    
+    if(dist < clusterRadius) {
+      // Inside cluster - generate pixels
+      float localDensity = density * (1.0 - dist / clusterRadius);
+      localDensity *= 1.0 + vol * 0.3;
+      
+      // Random pixel on/off based on position
+      float pxRand = H(pxCoord + cf * 100.0 + floor(t * 0.5));
+      float pxRand2 = H(pxCoord.yx + cf * 50.0 + floor(t * 0.3));
+      
+      if(pxRand < localDensity) {
+        // Pixel color selection
+        float colChoice = H(pxCoord + cf * 200.0);
+        vec3 pxCol;
+        if(colChoice < 0.4) pxCol = c1;
+        else if(colChoice < 0.7) pxCol = c2;
+        else if(colChoice < 0.9) pxCol = c3;
+        else pxCol = c4;
+        
+        // Slight brightness variation
+        pxCol *= 0.8 + 0.4 * H(pxCoord + cf * 300.0);
+        
+        col = pxCol;
+      }
+    }
+  }
+  
+  // === SCATTERED NOISE PIXELS ===
+  float noiseRand = H(pxCoord + floor(t * 2.0));
+  float noiseRand2 = H(pxCoord.yx + floor(t * 1.5));
+  if(noiseRand < scatter * 0.15) {
+    float colSel = H(pxCoord + 500.0);
+    if(colSel < 0.5) col = c1 * (0.5 + noiseRand2);
+    else col = c2 * (0.5 + noiseRand2);
+  }
+  
+  // === DIAGONAL PIXEL STREAKS ===
+  for(int i = 0; i < 8; i++) {
+    float fi = float(i);
+    float streakSeed = H(vec2(fi, floor(t * 0.3)));
+    if(streakSeed > 1.0 - diagStreak) {
+      float streakY = (H(vec2(fi, 0.0)) - 0.5) * 2.0;
+      float streakX = mod(t * (0.2 + H(vec2(fi, 1.0)) * 0.3) + H(vec2(fi, 2.0)) * 5.0, 3.0) - 1.5;
+      float streakAngle = -0.7 + H(vec2(fi, 3.0)) * 0.4;
+      
+      // Check if on streak (diagonal line of pixels)
+      vec2 streakDir = vec2(cos(streakAngle), sin(streakAngle));
+      vec2 toPixel = p - vec2(streakX, streakY);
+      float alongStreak = dot(toPixel, streakDir);
+      float perpStreak = abs(dot(toPixel, vec2(-streakDir.y, streakDir.x)));
+      
+      if(alongStreak > 0.0 && alongStreak < 0.4 && perpStreak < pxSize * 2.0) {
+        float streakRand = H(pxCoord + fi * 100.0);
+        if(streakRand < 0.7) {
+          col = mix(c1, c2, H(pxCoord + fi * 150.0));
+        }
+      }
+    }
+  }
+  
+  // === RECTANGULAR GLITCH OUTLINES ===
+  for(int i = 0; i < 6; i++) {
+    float fi = float(i);
+    float rectSeed = H(vec2(fi + 50.0, floor(t * 0.5)));
+    if(rectSeed > 1.0 - rectGlitch) {
+      vec2 rectPos = vec2(
+        (H(vec2(fi, 10.0)) - 0.5) * 1.6,
+        (H(vec2(fi, 11.0)) - 0.5) * 1.6
+      );
+      vec2 rectSize = vec2(
+        0.05 + H(vec2(fi, 12.0)) * 0.2,
+        0.05 + H(vec2(fi, 13.0)) * 0.15
+      );
+      
+      // Rectangle outline check
+      vec2 d = abs(p - rectPos) - rectSize;
+      float outline = max(d.x, d.y);
+      float innerOutline = max(d.x + pxSize * 2.0, d.y + pxSize * 2.0);
+      
+      if(outline < 0.0 && innerOutline > 0.0) {
+        float rectColSel = H(vec2(fi, 14.0));
+        if(rectColSel < 0.5) col = c1;
+        else col = c3;
+      }
+    }
+  }
+  
+  // === SYNTHWAVE BAND GLITCHES (chunky horizontal tears, seed-controlled) ===
+  if(bandGlitch > 0.05) {
+    for(int b = 0; b < 4; b++) {
+      float fb = float(b);
+      float bandSeed = H(vec2(fb + 20.0, floor(t * 0.2)));
+      if(bandSeed > 1.0 - bandGlitch - vol * 0.1) {
+        float bandY = (H(vec2(fb, 30.0)) - 0.5) * 1.8;
+        float bandH = 0.02 + H(vec2(fb, 31.0)) * 0.06;
+        
+        if(abs(p.y - bandY) < bandH) {
+          float bandShift = (H(vec2(fb, 32.0)) - 0.5) * 0.3;
+          float bandRand = H(pxCoord + vec2(bandShift * 100.0, fb));
+          
+          // Chunky color bands like the reference
+          if(bandRand < 0.5) {
+            col = mix(col, c1 * 0.9, 0.7);
+          } else if(bandRand < 0.7) {
+            col = mix(col, c3 * 0.8, 0.5);
+          }
+        }
+      }
+    }
+  }
+  
+  // === HORIZONTAL GLITCH DISPLACEMENT ===
+  float hGlitchLine = step(0.92 - vol * 0.05, H(vec2(pxCoord.y, floor(t * 4.0))));
+  if(hGlitchLine > 0.5) {
+    float shiftAmt = (H(vec2(pxCoord.y + 1.0, floor(t * 4.0))) - 0.5) * 20.0;
+    vec2 shiftCoord = pxCoord + vec2(shiftAmt, 0.0);
+    float shiftRand = H(shiftCoord + floor(t * 2.0));
+    if(shiftRand < density * 0.8) {
+      col = mix(c1, c2, H(shiftCoord + 100.0));
+    }
+  }
+  
+  // === BLOCK DISPLACEMENT ===
+  vec2 blockCoord = floor(uv * 8.0);
+  float blockGlitch = step(0.88 - vol * 0.08, H(blockCoord + floor(t * 1.5)));
+  if(blockGlitch > 0.5) {
+    vec2 blockShift = (vec2(H(blockCoord + t), H(blockCoord.yx + t)) - 0.5) * 0.1;
+    vec2 newPxCoord = floor((uv + blockShift) * res.x / pixelSize);
+    float bRand = H(newPxCoord + 200.0);
+    if(bRand < 0.5) {
+      col = mix(col, c1, 0.7);
+    } else if(bRand < 0.7) {
+      col = mix(col, c3, 0.6);
+    }
+  }
+  
+  // === RGB CHANNEL SPLIT ===
+  float rgbSplit = glitchAmt * 0.02 * (1.0 + vol);
+  vec2 rCoord = floor((uv + vec2(rgbSplit, 0.0)) * res.x / pixelSize);
+  vec2 bCoord = floor((uv - vec2(rgbSplit, 0.0)) * res.x / pixelSize);
+  
+  float rShift = H(rCoord + floor(t * 2.0));
+  float bShift = H(bCoord + floor(t * 2.0));
+  
+  if(rShift < density * 0.5 && col.r < 0.1) col.r += c1.r * 0.6;
+  if(bShift < density * 0.5 && col.b < 0.1) col.b += c2.b * 0.5;
+  
+  // === SCANLINE GLITCH ===
+  float scanGlitch = step(0.95, sin(puv.y * 300.0 + t * 50.0));
+  col = mix(col, col.gbr, scanGlitch * 0.5);
+  
+  // === PIXEL DROPOUT ===
+  float dropout = step(0.97, H(pxCoord + floor(t * 8.0)));
+  if(dropout > 0.5 && length(col) > 0.1) {
+    col = vec3(0.0);
+  }
+  
+  // === FRAME CORRUPTION BLOCKS ===
+  vec2 corruptBlock = floor(uv * 5.0);
+  float corrupt = step(0.93 - vol * 0.05, H(corruptBlock + floor(t * 0.8)));
+  if(corrupt > 0.5) {
+    col = col.brg;
+  }
+  
+  // === STATIC NOISE BURST ===
+  float staticBurst = step(0.96, H(vec2(floor(t * 6.0), 0.0)));
+  if(staticBurst > 0.5) {
+    float staticPx = H(pxCoord + t * 100.0);
+    if(staticPx > 0.7) col = vec3(staticPx * 0.5);
+  }
+  
+  // === AURORA COLOR CURTAINS (vertical color bleed) ===
+  if(auroraAmt > 0.02) {
+    for(int a = 0; a < 5; a++) {
+      float fa = float(a);
+      float curtainX = (H(vec2(fa, 200.0)) - 0.5) * 2.5;
+      float curtainW = 0.1 + H(vec2(fa, 201.0)) * 0.3;
+      float curtainDist = abs(p.x - curtainX);
+      
+      if(curtainDist < curtainW) {
+        float curtainFade = 1.0 - curtainDist / curtainW;
+        curtainFade *= curtainFade;
+        
+        // Vertical color gradient
+        float gradPos = p.y * 0.5 + 0.5 + sin(t * 0.1 + fa) * 0.2;
+        vec3 curtainCol = mix(c1, c2, gradPos);
+        curtainCol = mix(curtainCol, c3, sin(gradPos * PI) * 0.5);
+        
+        col = mix(col, curtainCol, curtainFade * auroraAmt * 0.6);
+      }
+    }
+  }
+  
+  // === VERTICAL DRIP STREAKS (pixel sort style) ===
+  if(dripIntensity > 0.02) {
+    float dripX = floor(puv.x * 60.0);
+    float dripSeed = H(vec2(dripX, 300.0));
+    
+    if(dripSeed < dripIntensity) {
+      float dripStart = (H(vec2(dripX, 301.0)) - 0.3) * 1.5;
+      float dripLen = 0.2 + H(vec2(dripX, 302.0)) * 0.6;
+      float dripSpeed = 0.1 + H(vec2(dripX, 303.0)) * 0.2;
+      
+      float dripY = mod(dripStart - t * dripSpeed, 2.5) - 0.5;
+      
+      if(p.y < dripY && p.y > dripY - dripLen) {
+        float dripFade = (dripY - p.y) / dripLen;
+        vec3 dripCol = mix(c1, c2, H(vec2(dripX, 304.0)));
+        dripCol *= 0.7 + 0.3 * dripFade;
+        col = mix(col, dripCol, (1.0 - dripFade) * 0.7);
+      }
+    }
+  }
+  
+  // === RIPPLE WAVE TEXTURE ===
+  if(rippleAmt > 0.02) {
+    float ripple = sin(p.x * 25.0 + p.y * 8.0 + t * 0.5) * 
+                   sin(p.y * 15.0 - p.x * 5.0 + t * 0.3);
+    ripple = ripple * 0.5 + 0.5;
+    
+    // Fingerprint-like whorls
+    float whorl = sin(length(p - vec2(0.3, 0.2)) * 30.0 - t * 0.2) * 
+                  sin(atan(p.y - 0.2, p.x - 0.3) * 8.0 + t * 0.1);
+    whorl = whorl * 0.5 + 0.5;
+    
+    float pattern = mix(ripple, whorl, 0.3);
+    vec3 rippleCol = mix(c2, c3, pattern);
+    col = mix(col, rippleCol, pattern * rippleAmt * 0.4);
+  }
+  
+  // === EXTRA GRAIN/DITHER ===
+  float grain = H(pxCoord + floor(t * 30.0)) * 2.0 - 1.0;
+  col += grain * grainAmt;
+  
+  // === SUBTLE VIGNETTE ===
+  float vig = 1.0 - pow(length(uv - 0.5) * 1.3, 3.0) * 0.5;
+  col *= vig;
+  
+  // === QUANTIZE COLORS (more pixelated feel) ===
+  col = floor(col * 8.0 + 0.5) / 8.0;
+  
+  col = clamp(col, 0.0, 1.0);
+  
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+const vs = gl.createShader(gl.VERTEX_SHADER);
+gl.shaderSource(vs, VS); gl.compileShader(vs);
+const fs = gl.createShader(gl.FRAGMENT_SHADER);
+gl.shaderSource(fs, FS); gl.compileShader(fs);
+if(!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(fs));
+
+const prog = gl.createProgram();
+gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+
+const pLoc = gl.getAttribLocation(prog, 'p');
+const U = n => gl.getUniformLocation(prog, n);
+const unis = {t:U('t'),res:U('res'),h1:U('h1'),h2:U('h2'),h3:U('h3'),
+  clusters:U('clusters'),density:U('density'),pixelSize:U('pixelSize'),
+  scatter:U('scatter'),glitchAmt:U('glitchAmt'),rectGlitch:U('rectGlitch'),
+  diagStreak:U('diagStreak'),sent:U('sent'),vol:U('vol'),
+  spireCount:U('spireCount'),spireIntensity:U('spireIntensity'),
+  gridIntensity:U('gridIntensity'),horizonGlow:U('horizonGlow'),bandGlitch:U('bandGlitch'),
+  spireSeeds:U('spireSeeds'),dripIntensity:U('dripIntensity'),rippleAmt:U('rippleAmt'),
+  auroraAmt:U('auroraAmt'),grainAmt:U('grainAmt')};
+
+canvas.width = 1200; canvas.height = 1200;
+gl.viewport(0, 0, 1200, 1200);
+
+function render(time) {
+  time *= 0.001;
+  gl.useProgram(prog);
+  gl.enableVertexAttribArray(pLoc);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
+  
+  gl.uniform1f(unis.t, time);
+  gl.uniform2f(unis.res, 1200, 1200);
+  gl.uniform1f(unis.h1, C.h1);
+  gl.uniform1f(unis.h2, C.h2);
+  gl.uniform1f(unis.h3, C.h3);
+  gl.uniform1f(unis.clusters, C.clusters);
+  gl.uniform1f(unis.density, C.density);
+  gl.uniform1f(unis.pixelSize, C.pixelSize);
+  gl.uniform1f(unis.scatter, C.scatter);
+  gl.uniform1f(unis.glitchAmt, C.glitchAmt);
+  gl.uniform1f(unis.rectGlitch, C.rectGlitch);
+  gl.uniform1f(unis.diagStreak, C.diagStreak);
+  gl.uniform1f(unis.sent, M.sent);
+  gl.uniform1f(unis.vol, M.vol);
+  gl.uniform1f(unis.spireCount, C.spireCount);
+  gl.uniform1f(unis.spireIntensity, C.spireIntensity);
+  gl.uniform1f(unis.gridIntensity, C.gridIntensity);
+  gl.uniform1f(unis.horizonGlow, C.horizonGlow);
+  gl.uniform1f(unis.bandGlitch, C.bandGlitch);
+  gl.uniform1fv(unis.spireSeeds, C.spireSeeds);
+  gl.uniform1f(unis.dripIntensity, C.dripIntensity);
+  gl.uniform1f(unis.rippleAmt, C.rippleAmt);
+  gl.uniform1f(unis.auroraAmt, C.auroraAmt);
+  gl.uniform1f(unis.grainAmt, C.grainAmt);
+  
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  requestAnimationFrame(render);
+}
+render(0);
+
+document.getElementById('randomize').onclick = () => { gen(Math.floor(Math.random() * 100000)); history.replaceState({}, '', '?seed=' + seed); };
+document.getElementById('save').onclick = () => { const a = document.createElement('a'); a.download = 'vector-dream-' + seed + '.png'; a.href = canvas.toDataURL('image/png'); a.click(); };
+document.onkeydown = e => { if(e.code === 'Space') { e.preventDefault(); document.getElementById('randomize').click(); }};
+</script>
+</body>
+</html>

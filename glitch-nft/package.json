@@ -1,0 +1,28 @@
+{
+  "name": "vector-dream-nft",
+  "version": "1.0.0",
+  "description": "Generative vaporwave NFT collection on ETH",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy.js --network mainnet",
+    "upload:arweave": "node scripts/upload-arweave.js",
+    "mint": "node scripts/mint.js",
+    "list:opensea": "node scripts/list-opensea.js",
+    "full-deploy": "npm run upload:arweave && npm run deploy:mainnet",
+    "dev": "http-server . -p 8080 -c-1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "@opensea/seaport-js": "^4.0.0",
+    "arweave": "^1.14.0",
+    "dotenv": "^16.3.0",
+    "ethers": "^6.9.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0",
+    "http-server": "^14.1.1"
+  }
+}
