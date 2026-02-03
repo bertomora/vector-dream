@@ -118,8 +118,8 @@ function gen(s) {
   const colorIntensity = 0.45 + R() * 0.7 + satBoost; // 0.45 to 1.35
   const colorShift = (R() - 0.5) * 140;    // -70 to +70 hue shift (was ±40)
   
-  // === BRIGHTNESS/CONTRAST (wider range) ===
-  const brightness = 0.5 + R() * 0.9;     // 0.5 to 1.4 (was 0.7-1.3)
+  // === BRIGHTNESS/CONTRAST (balanced range) ===
+  const brightness = 0.75 + R() * 0.4;    // 0.75 to 1.15
   
   // === BASE CONFIG (all zeroed - styles add their own) ===
   C = {
@@ -444,8 +444,6 @@ function gen(s) {
   if (R() < 0.06) { C.h2 += 120; C.h3 -= 60; } // split complements
   if (R() < 0.05) { C.colorIntensity = 0.2 + R() * 0.3; } // desaturated
   if (R() < 0.05) { C.colorIntensity = 1.1 + R() * 0.3; } // hypersaturated
-  if (R() < 0.05) { C.brightness = 1.3 + R() * 0.3; } // blown out
-  if (R() < 0.05) { C.brightness = 0.35 + R() * 0.2; } // very dark
   if (R() < 0.08) C.dripIntensity += 0.2 + R() * 0.3;
   if (R() < 0.08) C.auroraAmt += 0.2 + R() * 0.3;
   if (R() < 0.08) C.rippleAmt += 0.2 + R() * 0.25;
