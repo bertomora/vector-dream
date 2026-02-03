@@ -438,38 +438,70 @@ function gen(s) {
     if (R() < 0.2) C.mirrorAmt = 0.7 + R() * 0.3;
   }
   
-  // === WILD CARD MUTATIONS (8-15% chance each, stacking for uniqueness) ===
-  if (R() < 0.12) C.mirrorAmt = 0.85 + R() * 0.15;
-  if (R() < 0.10) C.chromaAmt += 0.25 + R() * 0.3;
-  if (R() < 0.06) C.pixelSize = 1 + Math.floor(R() * 8);  // varied but not extreme
-  if (R() < 0.10) C.grainAmt += 0.1 + R() * 0.2;
-  if (R() < 0.10) C.crtAmt += 0.3 + R() * 0.4;
-  if (R() < 0.03) C.invertAmt = 0.3 + R() * 0.2;  // subtle, rare
-  if (R() < 0.10) C.edgeGlow += 0.3 + R() * 0.4;
-  if (R() < 0.10) C.vhsAmt += 0.25 + R() * 0.35;
-  if (R() < 0.08) C.posterize = 2 + Math.floor(R() * 4);
-  if (R() < 0.08) { C.density = 0.6 + R() * 0.35; C.scatter = 0.5 + R() * 0.4; }
-  if (R() < 0.08) { C.clusters = 3 + Math.floor(R() * 3); C.spireCount = 4 + Math.floor(R() * 4); }
-  if (R() < 0.08) C.marbleAmt += 0.25 + R() * 0.35;
-  if (R() < 0.08) C.noiseWarp += 0.2 + R() * 0.25;
-  if (R() < 0.06) { C.isoCubes = 5 + Math.floor(R() * 5); C.isoRgbSplit = 0.025 + R() * 0.02; }
-  if (R() < 0.06) { C.geoShapes = 5 + Math.floor(R() * 5); }
-  if (R() < 0.08) { C.h1 += 90 + R() * 180; } // partial to full hue rotation
-  if (R() < 0.06) { C.h2 += 120; C.h3 -= 60; } // split complements
-  if (R() < 0.05) { C.colorIntensity = 0.2 + R() * 0.3; } // desaturated
-  if (R() < 0.05) { C.colorIntensity = 1.1 + R() * 0.3; } // hypersaturated
-  if (R() < 0.08) C.dripIntensity += 0.2 + R() * 0.3;
-  if (R() < 0.08) C.auroraAmt += 0.2 + R() * 0.3;
-  if (R() < 0.08) C.rippleAmt += 0.2 + R() * 0.25;
-  if (R() < 0.08) C.hSortAmt += 0.2 + R() * 0.3;
-  if (R() < 0.06) C.bandGlitch += 0.25 + R() * 0.3;
-  if (R() < 0.06) C.gridIntensity += 0.15 + R() * 0.25;
-  if (R() < 0.06) C.horizonGlow += 0.15 + R() * 0.2;
-  if (R() < 0.04) { C.spireIntensity = 0.6 + R() * 0.35; C.spireCount = 6 + Math.floor(R() * 3); }
-  // Rare combos
-  if (R() < 0.03) { C.mirrorAmt = 1.0; C.chromaAmt += 0.4; C.edgeGlow += 0.5; }
-  if (R() < 0.03) { C.crtAmt = 0.8; C.vhsAmt = 0.6; C.posterize = 3; }
-  if (R() < 0.03) { C.marbleAmt = 0.5; C.rippleAmt = 0.4; C.auroraAmt = 0.4; }
+  // === STYLE-SPECIFIC MUTATIONS (only enhance current style, no cross-contamination) ===
+  // Universal subtle variations (don't change style character)
+  if (R() < 0.15) C.mirrorAmt = 0.85 + R() * 0.15;  // mirror works for all
+  if (R() < 0.12) { C.h1 += (R() - 0.5) * 60; }     // subtle hue shift
+  if (R() < 0.10) C.grainAmt += 0.05 + R() * 0.1;   // grain is universal
+  
+  // Style-specific intensity boosts (same effects, just stronger)
+  if (style === 'synthwave') {
+    if (R() < 0.15) C.spireIntensity += 0.15 + R() * 0.2;
+    if (R() < 0.12) C.gridIntensity += 0.1 + R() * 0.15;
+    if (R() < 0.10) C.horizonGlow += 0.1 + R() * 0.15;
+    if (R() < 0.08) C.bandGlitch += 0.15 + R() * 0.2;
+  }
+  else if (style === 'databend') {
+    if (R() < 0.15) C.dripIntensity += 0.15 + R() * 0.25;
+    if (R() < 0.12) C.auroraAmt += 0.15 + R() * 0.2;
+    if (R() < 0.10) C.hSortAmt += 0.15 + R() * 0.2;
+    if (R() < 0.08) C.scatter += 0.1 + R() * 0.15;
+  }
+  else if (style === 'corrupt') {
+    if (R() < 0.15) C.glitchAmt += 0.2 + R() * 0.25;
+    if (R() < 0.12) C.chromaAmt += 0.15 + R() * 0.25;
+    if (R() < 0.10) C.bandGlitch += 0.2 + R() * 0.25;
+    if (R() < 0.08) { C.density += 0.15; C.scatter += 0.15; }
+  }
+  else if (style === 'liquid') {
+    if (R() < 0.15) C.marbleAmt += 0.15 + R() * 0.2;
+    if (R() < 0.12) C.rippleAmt += 0.15 + R() * 0.2;
+    if (R() < 0.10) C.auroraAmt += 0.1 + R() * 0.15;
+    if (R() < 0.08) C.dripIntensity += 0.1 + R() * 0.15;
+  }
+  else if (style === 'minimal') {
+    if (R() < 0.15) C.scatter += 0.1 + R() * 0.15;
+    if (R() < 0.10) C.grainAmt += 0.05 + R() * 0.08;
+    if (R() < 0.08) C.diagStreak += 0.1 + R() * 0.15;
+  }
+  else if (style === 'retro') {
+    if (R() < 0.15) C.crtAmt += 0.2 + R() * 0.25;
+    if (R() < 0.12) C.vhsAmt += 0.15 + R() * 0.25;
+    if (R() < 0.10) C.posterize = Math.max(C.posterize, 3 + Math.floor(R() * 3));
+    if (R() < 0.08) C.bandGlitch += 0.15 + R() * 0.2;
+  }
+  else if (style === 'neon') {
+    if (R() < 0.15) C.edgeGlow += 0.2 + R() * 0.25;
+    if (R() < 0.12) C.diagStreak += 0.15 + R() * 0.25;
+    if (R() < 0.10) C.chromaAmt += 0.1 + R() * 0.15;
+    if (R() < 0.08) { C.density += 0.1; C.clusters += 1; }
+  }
+  else if (style === 'geometric') {
+    if (R() < 0.15) C.geoShapes += 2 + Math.floor(R() * 3);
+    if (R() < 0.10) C.edgeGlow += 0.1 + R() * 0.15;
+  }
+  else if (style === 'isometric') {
+    if (R() < 0.15) C.isoCubes += 2 + Math.floor(R() * 3);
+    if (R() < 0.12) C.isoRgbSplit += 0.01 + R() * 0.015;
+    if (R() < 0.08) C.gridIntensity += 0.08 + R() * 0.12;
+  }
+  else if (style === 'void') {
+    if (R() < 0.15) C.noiseWarp += 0.1 + R() * 0.15;
+    if (R() < 0.12) C.scatter += 0.15 + R() * 0.2;
+    if (R() < 0.10) C.grainAmt += 0.08 + R() * 0.1;
+    if (R() < 0.08) C.auroraAmt += 0.08 + R() * 0.12;
+  }
+  // chaos stays as-is (it's meant to mix)
   
   // Display style info
   document.getElementById('seed-num').textContent = seed + ' [' + style + '-' + subStyle + '] ' + zone;
