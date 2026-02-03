@@ -84,7 +84,7 @@ function gen(s) {
   else if (bgRoll < 0.66) bgType = 'gradient';
   else bgType = 'textured';
   
-  // === EXPANDED COLOR PALETTES (24 options) ===
+  // === EXPANDED COLOR PALETTES (32 options - including luxury tones) ===
   const pals = [
     [330, 185, 0],     // pink/cyan/red
     [320, 190, 30],    // magenta/teal/orange
@@ -110,6 +110,15 @@ function gen(s) {
     [210, 60, 300],    // sky-blue/yellow/magenta
     [240, 120, 0],     // blue/green/red
     [30, 150, 270],    // orange/teal/purple
+    // Luxury/gallery tones
+    [35, 200, 280],    // bronze/teal/indigo
+    [45, 190, 320],    // gold/cyan/violet
+    [25, 210, 340],    // copper/aqua/magenta
+    [220, 40, 280],    // deep blue/amber/purple
+    [350, 200, 250],   // rose gold/teal/lavender
+    [200, 35, 310],    // steel blue/gold/fuchsia
+    [270, 45, 190],    // royal purple/amber/cyan
+    [15, 230, 290],    // ember/turquoise/violet
   ];
   const pal = pals[Math.floor(R() * pals.length)];
   
@@ -906,19 +915,46 @@ void main(){
     col = mix(col, vec3(1.0) - col, invertAmt);
   }
   
-  // === EXTRA GRAIN/DITHER ===
-  float grain = H(pxCoord + floor(t * 30.0)) * 2.0 - 1.0;
-  col += grain * grainAmt;
+  // === PREMIUM FINISHING EFFECTS ===
   
-  // === SUBTLE VIGNETTE ===
-  float vig = 1.0 - pow(length(uv - 0.5) * 1.3, 3.0) * 0.5;
+  // Subtle metallic shimmer on bright areas
+  float lum = dot(col, vec3(0.299, 0.587, 0.114));
+  float shimmer = sin(p.x * 80.0 + p.y * 40.0 + t * 0.3) * 0.5 + 0.5;
+  shimmer *= sin(p.x * 30.0 - p.y * 60.0 + t * 0.2) * 0.5 + 0.5;
+  vec3 goldTint = vec3(1.0, 0.85, 0.6);
+  col = mix(col, col * goldTint, shimmer * lum * 0.08);
+  
+  // Soft bloom on highlights
+  float bloom = smoothstep(0.5, 0.9, lum);
+  col += col * bloom * 0.15;
+  
+  // Film-like lift (subtle light in shadows)
+  col = mix(vec3(0.02, 0.015, 0.025), col, 0.97 + lum * 0.03);
+  
+  // Refined organic grain (film-like, not digital)
+  float grain1 = H(pxCoord + floor(t * 30.0)) * 2.0 - 1.0;
+  float grain2 = H(pxCoord.yx + floor(t * 25.0 + 100.0)) * 2.0 - 1.0;
+  float organicGrain = (grain1 + grain2 * 0.5) * 0.67;
+  col += organicGrain * grainAmt * 0.7;
+  
+  // Gallery vignette (softer falloff, elegant framing)
+  vec2 vigUV = uv - 0.5;
+  float vigDist = length(vigUV * vec2(1.0, 0.95));  // slight vertical stretch
+  float vig = 1.0 - smoothstep(0.4, 0.85, vigDist) * 0.45;
   col *= vig;
   
-  // === QUANTIZE COLORS (more pixelated feel) ===
-  col = floor(col * 8.0 + 0.5) / 8.0;
+  // Subtle inner glow (light emanating from center)
+  float innerGlow = 1.0 - smoothstep(0.0, 0.6, vigDist);
+  col += col * innerGlow * 0.06;
+  
+  // Higher quality color (smoother gradients, 12-bit feel)
+  col = floor(col * 32.0 + 0.5) / 32.0;
   
   // Apply brightness
   col *= brightness;
+  
+  // Final subtle contrast enhancement
+  col = smoothstep(0.0, 1.0, col);
   
   col = clamp(col, 0.0, 1.0);
   
