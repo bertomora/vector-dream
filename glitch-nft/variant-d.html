@@ -1018,6 +1018,55 @@ void main(){
   // Apply brightness
   col *= brightness;
   
+  // === VARIANT D: CYBER HUD OVERLAY ===
+  vec3 hudCol = c1 * 0.8; // HUD color from palette
+  float hudAlpha = 0.0;
+  
+  // Corner brackets (all 4 corners)
+  float bracketSize = 0.12;
+  float bracketThick = 0.006;
+  for(int corner = 0; corner < 4; corner++) {
+    vec2 cornerPos = vec2(
+      corner < 2 ? bracketSize : 1.0 - bracketSize,
+      corner == 0 || corner == 2 ? bracketSize : 1.0 - bracketSize
+    );
+    vec2 toCorner = puv - cornerPos;
+    vec2 absTC = abs(toCorner);
+    
+    // L-shaped bracket
+    float hLine = step(absTC.y, bracketThick) * step(absTC.x, bracketSize * 0.5);
+    float vLine = step(absTC.x, bracketThick) * step(absTC.y, bracketSize * 0.5);
+    hudAlpha = max(hudAlpha, hLine + vLine);
+  }
+  
+  // Center crosshair
+  float crossSize = 0.04;
+  float crossGap = 0.015;
+  vec2 cp = abs(puv - 0.5);
+  float crossH = step(cp.y, bracketThick * 0.7) * step(crossGap, cp.x) * step(cp.x, crossSize);
+  float crossV = step(cp.x, bracketThick * 0.7) * step(crossGap, cp.y) * step(cp.y, crossSize);
+  hudAlpha = max(hudAlpha, crossH + crossV);
+  
+  // Scanning line (moves down)
+  float scanY = fract(t * 0.1);
+  float scanLine = smoothstep(0.01, 0.0, abs(puv.y - scanY)) * 0.5;
+  hudAlpha = max(hudAlpha, scanLine);
+  
+  // Grid overlay (subtle)
+  float gridH = step(0.98, fract(puv.y * 20.0));
+  float gridV = step(0.98, fract(puv.x * 20.0));
+  hudAlpha = max(hudAlpha, (gridH + gridV) * 0.15);
+  
+  // Data ticks on edges
+  float tickL = step(puv.x, 0.02) * step(0.9, fract(puv.y * 30.0)) * 0.6;
+  float tickR = step(0.98, puv.x) * step(0.9, fract(puv.y * 30.0)) * 0.6;
+  float tickT = step(0.98, puv.y) * step(0.9, fract(puv.x * 30.0)) * 0.6;
+  float tickB = step(puv.y, 0.02) * step(0.9, fract(puv.x * 30.0)) * 0.6;
+  hudAlpha = max(hudAlpha, tickL + tickR + tickT + tickB);
+  
+  // Apply HUD
+  col = mix(col, hudCol, hudAlpha * 0.9);
+  
   col = clamp(col, 0.0, 1.0);
   
   gl_FragColor = vec4(col, 1.0);

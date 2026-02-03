@@ -1018,6 +1018,50 @@ void main(){
   // Apply brightness
   col *= brightness;
   
+  // === VARIANT F: DATABEND / VERTICAL MELT ===
+  
+  // Vertical pixel stretching zones
+  float stretchX = floor(puv.x * 40.0);
+  float stretchSeed = H(vec2(stretchX, floor(t * 0.2)));
+  float stretchStart = H(vec2(stretchX, 1.0));
+  float stretchLen = 0.2 + H(vec2(stretchX, 2.0)) * 0.5;
+  
+  float inStretch = step(0.7, stretchSeed) * step(stretchStart, puv.y) * step(puv.y, stretchStart + stretchLen);
+  float stretchProgress = (puv.y - stretchStart) / stretchLen;
+  vec3 stretchCol = mix(c1, c2, H(vec2(stretchX, 3.0)));
+  stretchCol *= 0.7 + stretchProgress * 0.4;
+  col = mix(col, stretchCol, inStretch * 0.8);
+  
+  // Horizontal data corruption bands
+  float corruptY = floor(puv.y * 60.0);
+  float corruptSeed = H(vec2(corruptY, floor(t * 0.3)));
+  float isCorrupt = step(0.85, corruptSeed);
+  
+  float corruptType = H(vec2(corruptY, 20.0));
+  vec3 corruptCol = corruptType < 0.33 ? col.gbr : (corruptType < 0.66 ? col.brg : col);
+  corruptCol *= 0.8 + H(vec2(corruptY, 30.0)) * 0.4;
+  col = mix(col, corruptCol, isCorrupt);
+  
+  // Vertical drip/melt lines
+  for(int d = 0; d < 8; d++) {
+    float fd = float(d);
+    float dripX = H(vec2(fd, 50.0 + floor(t * 0.1)));
+    float dripW = 0.005 + H(vec2(fd, 51.0)) * 0.01;
+    float dripStart2 = H(vec2(fd, 52.0)) * 0.5;
+    float dripEnd = dripStart2 + 0.3 + H(vec2(fd, 53.0)) * 0.4;
+    
+    float inDrip = step(abs(puv.x - dripX), dripW) * step(dripStart2, puv.y) * step(puv.y, dripEnd);
+    float dripProgress2 = (puv.y - dripStart2) / (dripEnd - dripStart2);
+    vec3 dripCol = mix(c1, c3, H(vec2(fd, 54.0)));
+    dripCol *= 1.0 - dripProgress2 * 0.3;
+    col = mix(col, dripCol, inDrip * 0.7);
+  }
+  
+  // Glitch displacement blocks
+  vec2 blockID = floor(puv * 15.0);
+  float blockGlitch = step(0.92, H(blockID + floor(t * 0.4)));
+  col = mix(col, vec3(1.0) - col, blockGlitch);
+  
   col = clamp(col, 0.0, 1.0);
   
   gl_FragColor = vec4(col, 1.0);

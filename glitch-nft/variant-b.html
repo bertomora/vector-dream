@@ -1018,6 +1018,45 @@ void main(){
   // Apply brightness
   col *= brightness;
   
+  // === VARIANT B: EXTREME RGB CHANNEL SEPARATION ===
+  // Heavy chromatic aberration - each channel is offset
+  float baseOffset = 0.012;
+  
+  // Offset varies by position for more distortion
+  float distFromCenter = length(puv - 0.5);
+  float dynamicOffset = baseOffset * (1.0 + distFromCenter * 2.0);
+  
+  // Red shifts right, Blue shifts left, Green stays
+  vec2 redOffset = vec2(dynamicOffset, dynamicOffset * 0.3);
+  vec2 blueOffset = vec2(-dynamicOffset, -dynamicOffset * 0.2);
+  
+  // Sample offset positions
+  vec2 redUV = puv + redOffset;
+  vec2 blueUV = puv + blueOffset;
+  
+  // Create color channel ghosts
+  float redGhost = H(floor(redUV * res.x / pixelSize) + floor(t));
+  float blueGhost = H(floor(blueUV * res.x / pixelSize) + floor(t));
+  
+  // Shift the actual color channels
+  vec3 shifted;
+  shifted.r = col.r * 0.7 + (redGhost < 0.5 ? col.g : col.r) * 0.4;
+  shifted.g = col.g;
+  shifted.b = col.b * 0.7 + (blueGhost < 0.5 ? col.g : col.b) * 0.4;
+  
+  // Add visible color fringe halos
+  col.r += smoothstep(0.3, 0.6, distFromCenter) * 0.2;
+  col.b += smoothstep(0.2, 0.5, distFromCenter) * 0.15;
+  col.g *= 0.95;
+  
+  // Blend original with shifted
+  col = mix(col, shifted, 0.6);
+  
+  // Add diagonal color streaks
+  float streak = sin((puv.x + puv.y) * 50.0 + t * 0.5) * 0.5 + 0.5;
+  col.r += streak * 0.05;
+  col.b += (1.0 - streak) * 0.05;
+  
   col = clamp(col, 0.0, 1.0);
   
   gl_FragColor = vec4(col, 1.0);

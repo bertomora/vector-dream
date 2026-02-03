@@ -1018,6 +1018,44 @@ void main(){
   // Apply brightness
   col *= brightness;
   
+  // === VARIANT C: LED MATRIX / HEAVY DOT GRID ===
+  float gridScale = 4.0; // larger dots
+  vec2 gridPos = puv * res.x / gridScale;
+  vec2 gridUV = fract(gridPos);
+  vec2 gridID = floor(gridPos);
+  
+  // Strong circular LED dots
+  float dotDist = length(gridUV - 0.5);
+  float dotMask = smoothstep(0.45, 0.25, dotDist);
+  
+  // Black grid lines between dots
+  float gridLine = step(0.1, gridUV.x) * step(gridUV.x, 0.9) * 
+                   step(0.1, gridUV.y) * step(gridUV.y, 0.9);
+  
+  // Combine - dark between dots, bright on dots
+  col *= dotMask * gridLine * 1.3 + 0.1;
+  
+  // RGB subpixel triad pattern (like real CRT)
+  float subX = mod(gridID.x, 3.0);
+  vec3 subpixelMask = vec3(
+    subX < 1.0 ? 1.3 : 0.8,
+    subX >= 1.0 && subX < 2.0 ? 1.3 : 0.8,
+    subX >= 2.0 ? 1.3 : 0.8
+  );
+  col *= subpixelMask;
+  
+  // Dot glow/bloom effect
+  float glow = smoothstep(0.5, 0.2, dotDist) * 0.2;
+  col += col * glow;
+  
+  // Slight color variation per dot
+  float dotVar = H(gridID) * 0.1;
+  col *= 0.95 + dotVar;
+  
+  // Phosphor persistence / ghosting
+  float ghost = H(gridID + vec2(floor(t * 0.5), 0.0)) * 0.08;
+  col += ghost;
+  
   col = clamp(col, 0.0, 1.0);
   
   gl_FragColor = vec4(col, 1.0);

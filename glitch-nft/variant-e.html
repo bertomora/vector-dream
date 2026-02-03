@@ -1018,6 +1018,56 @@ void main(){
   // Apply brightness
   col *= brightness;
   
+  // === VARIANT E: VHS TAPE DAMAGE ===
+  
+  // Tracking error bands (horizontal displacement)
+  float trackingY = fract(t * 0.15);
+  float trackingBand = smoothstep(0.08, 0.0, abs(puv.y - trackingY));
+  float trackingShift = trackingBand * 0.1 * sin(t * 20.0);
+  
+  // Apply horizontal shift to color
+  if(trackingBand > 0.3) {
+    col = col.gbr; // color shift in tracking area
+    col *= 1.0 + trackingBand * 0.3;
+  }
+  
+  // VHS noise bands
+  for(int i = 0; i < 5; i++) {
+    float fi = float(i);
+    float bandY = fract(fi * 0.2 + t * 0.05 + H(vec2(fi, floor(t * 0.3))));
+    float bandH = 0.01 + H(vec2(fi, 100.0)) * 0.02;
+    float inBand = smoothstep(bandH, 0.0, abs(puv.y - bandY));
+    
+    // Static noise in band
+    float noise = H(pxCoord + vec2(fi * 50.0, floor(t * 30.0)));
+    col = mix(col, vec3(noise), inBand * 0.7);
+  }
+  
+  // Bottom screen roll/tear
+  float rollY = 0.92 + sin(t * 0.3) * 0.05;
+  if(puv.y > rollY) {
+    float rollAmt = (puv.y - rollY) / (1.0 - rollY);
+    col *= 1.0 - rollAmt * 0.8;
+    col = mix(col, col.brg, rollAmt);
+    // Add noise to rolled area
+    float rollNoise = H(pxCoord + floor(t * 20.0)) * rollAmt;
+    col += rollNoise * 0.4;
+  }
+  
+  // Overall tape noise
+  float tapeNoise = H(pxCoord + floor(t * 15.0));
+  col += (tapeNoise - 0.5) * 0.08;
+  
+  // Color bleed / smearing
+  col.r *= 1.05;
+  col.b *= 0.95;
+  
+  // Head switching noise at bottom
+  if(puv.y < 0.03) {
+    float switchNoise = H(vec2(pxCoord.x, floor(t * 25.0)));
+    col = mix(col, vec3(switchNoise), 0.8);
+  }
+  
   col = clamp(col, 0.0, 1.0);
   
   gl_FragColor = vec4(col, 1.0);

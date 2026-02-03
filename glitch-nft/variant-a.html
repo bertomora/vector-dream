@@ -1018,6 +1018,31 @@ void main(){
   // Apply brightness
   col *= brightness;
   
+  // === VARIANT A: HEAVY INTERLACED SCANLINES + COLOR BLEED ===
+  float scanFreq = 200.0;
+  float scanPhase = puv.y * scanFreq;
+  
+  // Strong scanline darkening
+  float scanLine = sin(scanPhase * 3.14159);
+  float scanMask = smoothstep(-0.2, 0.5, scanLine);
+  col *= 0.5 + scanMask * 0.6;
+  
+  // Color bleeding between lines - offset each channel vertically
+  float bleedAmt = 0.003;
+  float lineIdx = floor(scanPhase);
+  float bleedR = H(vec2(lineIdx, 1.0)) * bleedAmt;
+  float bleedB = H(vec2(lineIdx, 2.0)) * bleedAmt;
+  col.r *= 1.0 + sin((puv.y + bleedR) * scanFreq * 3.14159) * 0.15;
+  col.b *= 1.0 + sin((puv.y - bleedB) * scanFreq * 3.14159) * 0.15;
+  
+  // Occasional bright interference lines
+  float interference = step(0.97, H(vec2(lineIdx, floor(t * 2.0))));
+  col += interference * vec3(0.3, 0.35, 0.4);
+  
+  // Horizontal banding noise
+  float bandNoise = H(vec2(floor(puv.y * 80.0), floor(t * 0.5))) * 0.08;
+  col += bandNoise;
+  
   col = clamp(col, 0.0, 1.0);
   
   gl_FragColor = vec4(col, 1.0);
