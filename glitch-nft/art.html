@@ -174,6 +174,9 @@ function gen(s) {
     isoCubes: 0, isoSize: 0.15, isoRgbSplit: 0,
     cubeSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
     primSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
+    // Lightning bolts (for void style)
+    lightningAmt: 0,
+    boltSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
     // Composition offsets based on zone
     zoneOffsetX: 0, zoneOffsetY: 0,
     bgGradientAngle: R() * 6.28,
@@ -406,10 +409,11 @@ function gen(s) {
     }
   }
   else if (style === 'void') {
-    // Deep void - brutalist darkness with intentional elements
+    // Deep void - brutalist darkness with lightning
     C.grainAmt = 0.08 + R() * 0.1;
     C.brightness *= 0.8;  // embrace the darkness
-    if (subStyle === 'A') { // Dark scatter brutalist
+    C.lightningAmt = 0.6 + R() * 0.4; // Lightning bolts for void style
+    if (subStyle === 'A') { // Dark scatter with lightning
       C.pixelSize = 3 + Math.floor(R() * 3);
       C.clusters = 1;
       C.density = 0.04 + R() * 0.06;
@@ -501,6 +505,8 @@ uniform float shapeSeeds[6];
 uniform float isoCubes,isoSize,isoRgbSplit;
 uniform float cubeSeeds[8];
 uniform float primSeeds[5];
+uniform float lightningAmt;
+uniform float boltSeeds[6];
 uniform float zoneOffsetX,zoneOffsetY,bgGradientAngle,bgNoiseScale;
 uniform float colorIntensity,brightness;
 uniform int bgType; // 0=solid, 1=gradient, 2=textured
@@ -923,6 +929,104 @@ void main(){
     col = mix(col, vec3(1.0) - col, invertAmt);
   }
   
+  // === LIGHTNING BOLTS (void style) ===
+  if(lightningAmt > 0.1) {
+    for(int bolt = 0; bolt < 6; bolt++) {
+      float fbolt = float(bolt);
+      float boltSeed = boltSeeds[bolt];
+      
+      // Time-varying positions - bolts respawn in new locations
+      float timeSlot = floor(t * 2.0 + fbolt * 0.7);
+      
+      // Each bolt gets unique random start and end positions that change over time
+      vec2 start = vec2(
+        H(vec2(boltSeed + timeSlot, 710.0)) * 2.0 - 1.0,
+        H(vec2(boltSeed + timeSlot, 711.0)) * 2.0 - 1.0
+      );
+      vec2 end = vec2(
+        H(vec2(boltSeed + timeSlot + 100.0, 712.0)) * 2.0 - 1.0,
+        H(vec2(boltSeed + timeSlot + 100.0, 713.0)) * 2.0 - 1.0
+      );
+      
+      // Flicker on/off
+      float boltActive = step(0.3, H(vec2(fbolt, floor(t * 8.0)))) * lightningAmt;
+      
+      // Pick bolt color from palette
+      vec3 boltColor = c1;
+      float colPick = H(vec2(boltSeed, 820.0));
+      if(colPick < 0.25) boltColor = c1;
+      else if(colPick < 0.5) boltColor = c2;
+      else if(colPick < 0.75) boltColor = c3;
+      else boltColor = mix(c1, c2, 0.5);
+      
+      // Endpoint pulse effects
+      float pulseTime = fract(t * 3.0 + fbolt * 0.2);
+      float pulseWave = sin(pulseTime * 6.28) * 0.5 + 0.5;
+      
+      // Start point pulse
+      float startDist = length(p - start);
+      float startPulse = (0.12 * pulseWave + 0.05) / (startDist + 0.015) * boltActive;
+      col += boltColor * startPulse * 0.125;
+      
+      // Radiating rings from start
+      float startRing = abs(fract(startDist * 6.0 - t * 2.5) - 0.5);
+      startRing = smoothstep(0.15, 0.0, startRing) * smoothstep(0.4, 0.0, startDist);
+      col += boltColor * startRing * 0.15 * boltActive;
+      
+      // End point pulse
+      float endDist = length(p - end);
+      float endPulse = (0.1 * pulseWave + 0.04) / (endDist + 0.015) * boltActive;
+      col += boltColor * endPulse * 0.1;
+      
+      // Radiating rings from end
+      float endRing = abs(fract(endDist * 6.0 - t * 2.5 + 0.5) - 0.5);
+      endRing = smoothstep(0.15, 0.0, endRing) * smoothstep(0.35, 0.0, endDist);
+      col += boltColor * endRing * 0.125 * boltActive;
+      
+      // Jagged bolt segments
+      for(int seg = 0; seg < 10; seg++) {
+        float fseg = float(seg);
+        float t1 = fseg / 10.0;
+        float t2 = (fseg + 1.0) / 10.0;
+        
+        float jag1 = (H(vec2(boltSeed + fseg, floor(t * 6.0))) - 0.5) * 0.25;
+        float jag2 = (H(vec2(boltSeed + fseg + 1.0, floor(t * 6.0))) - 0.5) * 0.25;
+        
+        vec2 p1 = mix(start, end, t1);
+        vec2 p2 = mix(start, end, t2);
+        
+        vec2 dir = end - start;
+        float dirLen = length(dir);
+        if(dirLen > 0.01) {
+          dir = dir / dirLen;
+          vec2 perp = vec2(-dir.y, dir.x);
+          p1 += perp * jag1;
+          p2 += perp * jag2;
+        }
+        
+        // Distance to segment
+        vec2 pa = p - p1;
+        vec2 ba = p2 - p1;
+        float baLen = dot(ba, ba);
+        float hh = 0.0;
+        if(baLen > 0.0001) hh = clamp(dot(pa, ba) / baLen, 0.0, 1.0);
+        float segDist = length(pa - ba * hh);
+        
+        // Outer glow
+        float outerGlow = 0.012 / (segDist + 0.008) * boltActive;
+        col += boltColor * outerGlow * 0.175;
+        
+        // Inner glow
+        float innerGlow = 0.006 / (segDist + 0.003) * boltActive;
+        col += boltColor * innerGlow * 0.25;
+        
+        // Core (bright line)
+        float coreVis = step(segDist, 0.00375) * boltActive;
+        col = mix(col, boltColor + vec3(0.5), coreVis * 0.9);
+      }
+    }
+  }
+  
   // === PREMIUM FINISHING EFFECTS (elegant brutalist) ===
   
   // Subtle metallic shimmer on bright areas
@@ -1004,8 +1108,9 @@ const unis = {t:U('t'),res:U('res'),h1:U('h1'),h2:U('h2'),h3:U('h3'),
   vhsAmt:U('vhsAmt'),posterize:U('posterize'),geoShapes:U('geoShapes'),
   edgeGlow:U('edgeGlow'),noiseWarp:U('noiseWarp'),invertAmt:U('invertAmt'),
   shapeSeeds:U('shapeSeeds'),isoCubes:U('isoCubes'),isoSize:U('isoSize'),
-  isoRgbSplit:U('isoRgbSplit'),cubeSeeds:U('cubeSeeds'),primSeeds:U('primSeeds'),zoneOffsetX:U('zoneOffsetX'),
-  zoneOffsetY:U('zoneOffsetY'),bgGradientAngle:U('bgGradientAngle'),bgNoiseScale:U('bgNoiseScale'),
+  isoRgbSplit:U('isoRgbSplit'),cubeSeeds:U('cubeSeeds'),primSeeds:U('primSeeds'),
+  lightningAmt:U('lightningAmt'),boltSeeds:U('boltSeeds'),
+  zoneOffsetX:U('zoneOffsetX'),zoneOffsetY:U('zoneOffsetY'),bgGradientAngle:U('bgGradientAngle'),bgNoiseScale:U('bgNoiseScale'),
   colorIntensity:U('colorIntensity'),brightness:U('brightness'),bgType:U('bgType')};
 
 canvas.width = 1000; canvas.height = 1000;
@@ -1061,6 +1166,8 @@ function render(time) {
   gl.uniform1f(unis.isoRgbSplit, C.isoRgbSplit);
   gl.uniform1fv(unis.cubeSeeds, C.cubeSeeds);
   gl.uniform1fv(unis.primSeeds, C.primSeeds);
+  gl.uniform1f(unis.lightningAmt, C.lightningAmt);
+  gl.uniform1fv(unis.boltSeeds, C.boltSeeds);
   gl.uniform1f(unis.zoneOffsetX, C.zoneOffsetX);
   gl.uniform1f(unis.zoneOffsetY, C.zoneOffsetY);
   gl.uniform1f(unis.bgGradientAngle, C.bgGradientAngle);

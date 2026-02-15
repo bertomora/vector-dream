@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>VΞCTOR DRΞΛM - Market Reactive Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #0a0a12; 
+      overflow: hidden; 
+      font-family: 'Courier New', monospace; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 100vh;
+    }
+    
+    .container {
+      position: relative;
+      width: 500px;
+      height: 500px;
+    }
+    
+    canvas { 
+      display: block; 
+      width: 100%; 
+      height: 100%;
+      border-radius: 4px;
+    }
+    
+    /* Market reactive glow border */
+    .market-glow {
+      position: absolute;
+      inset: -3px;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0.8;
+      z-index: 10;
+    }
+    
+    .market-glow.bullish {
+      box-shadow: 
+        0 0 20px #0ff8,
+        0 0 40px #0ff4,
+        0 0 60px #0ff2,
+        inset 0 0 20px #0ff1;
+      animation: pulse-bull 2s ease-in-out infinite;
+    }
+    
+    .market-glow.bearish {
+      box-shadow: 
+        0 0 20px #f0f8,
+        0 0 40px #f0f4,
+        0 0 60px #f0f2,
+        inset 0 0 20px #f0f1;
+      animation: pulse-bear 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-bull {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    
+    @keyframes pulse-bear {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    
+    /* Market indicator overlay */
+    .market-indicator {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      padding: 8px 14px;
+      background: rgba(0,0,0,0.85);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      font-size: 11px;
+      z-index: 20;
+      backdrop-filter: blur(4px);
+    }
+    
+    .market-indicator .label {
+      color: #666;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    
+    .market-indicator .values {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .market-indicator .coin {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .market-indicator .symbol {
+      color: #888;
+    }
+    
+    .market-indicator .change {
+      font-weight: bold;
+    }
+    
+    .market-indicator .change.up { color: #0ff; }
+    .market-indicator .change.down { color: #f0f; }
+    
+    .market-indicator .pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      animation: indicator-pulse 1.5s ease-in-out infinite;
+    }
+    
+    .market-indicator .pulse.up { background: #0ff; }
+    .market-indicator .pulse.down { background: #f0f; }
+    
+    @keyframes indicator-pulse {
+      0%, 100% { opacity: 0.4; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    /* Demo controls */
+    .demo-controls {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+    
+    .demo-controls button {
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #0ff4;
+      color: #0ff;
+      padding: 10px 20px;
+      font: 12px 'Courier New', monospace;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    
+    .demo-controls button:hover {
+      background: #0ff2;
+      border-color: #0ff;
+    }
+    
+    .demo-controls button.bearish {
+      border-color: #f0f4;
+      color: #f0f;
+    }
+    
+    .demo-controls button.bearish:hover {
+      background: #f0f2;
+      border-color: #f0f;
+    }
+    
+    .status {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #666;
+      font-size: 11px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="demo-controls">
+  <button onclick="setMarket(3.5, 2.1)">📈 BULL MARKET</button>
+  <button onclick="setMarket(0.2, -0.3)">😐 NEUTRAL</button>
+  <button class="bearish" onclick="setMarket(-4.2, -5.8)">📉 BEAR MARKET</button>
+  <button onclick="setMarket(8.5, -6.2)">⚡ HIGH VOLATILITY</button>
+</div>
+
+<div class="container">
+  <div class="market-glow bullish" id="glow"></div>
+  <canvas id="c"></canvas>
+  <div class="market-indicator">
+    <div class="label">Market Reactive</div>
+    <div class="values">
+      <div class="coin">
+        <span class="pulse up" id="pulse"></span>
+        <span class="symbol">BTC</span>
+        <span class="change up" id="btc-val">+2.3%</span>
+      </div>
+      <div class="coin">
+        <span class="symbol">ETH</span>
+        <span class="change up" id="eth-val">+1.8%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="status">
+  Click buttons to simulate different market conditions<br>
+  Watch the border glow and colors shift
+</div>
+
+<script>
+// Market state
+let M = { btc: 2.3, eth: 1.8, sent: 0.3, vol: 0.3 };
+
+function setMarket(btc, eth) {
+  M.btc = btc;
+  M.eth = eth;
+  M.sent = Math.tanh((btc + eth) / 8);
+  M.vol = Math.min(1, (Math.abs(btc) + Math.abs(eth)) / 12);
+  
+  // Update indicator
+  document.getElementById('btc-val').textContent = (btc >= 0 ? '+' : '') + btc.toFixed(1) + '%';
+  document.getElementById('btc-val').className = 'change ' + (btc >= 0 ? 'up' : 'down');
+  document.getElementById('eth-val').textContent = (eth >= 0 ? '+' : '') + eth.toFixed(1) + '%';
+  document.getElementById('eth-val').className = 'change ' + (eth >= 0 ? 'up' : 'down');
+  
+  // Update glow
+  const glow = document.getElementById('glow');
+  const pulse = document.getElementById('pulse');
+  const avgChange = (btc + eth) / 2;
+  if (avgChange > 0.5) {
+    glow.className = 'market-glow bullish';
+    pulse.className = 'pulse up';
+  } else if (avgChange < -0.5) {
+    glow.className = 'market-glow bearish';
+    pulse.className = 'pulse down';
+  } else {
+    glow.className = 'market-glow';
+    glow.style.boxShadow = '0 0 15px #fff2, inset 0 0 10px #fff1';
+    pulse.className = 'pulse';
+    pulse.style.background = '#888';
+  }
+}
+
+// Simple generative art demo
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = 500;
+canvas.height = 500;
+
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
+let seed = 77909;
+let R = mulberry32(seed);
+
+function hslToRgb(h, s, l) {
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function draw() {
+  const t = Date.now() / 1000;
+  
+  // Market-influenced colors
+  const baseHue1 = 0.85 + M.sent * 0.08; // Pink shifts with sentiment
+  const baseHue2 = 0.55 + M.sent * 0.06; // Cyan shifts with sentiment
+  
+  // Background
+  ctx.fillStyle = '#0a0a12';
+  ctx.fillRect(0, 0, 500, 500);
+  
+  // Draw circles with market-reactive colors and movement
+  R = mulberry32(seed);
+  for (let i = 0; i < 12; i++) {
+    const baseX = R() * 500;
+    const baseY = R() * 500;
+    const size = 30 + R() * 100;
+    
+    // Movement influenced by volatility
+    const wobble = M.vol * 20;
+    const x = baseX + Math.sin(t * (0.5 + R()) + i) * wobble;
+    const y = baseY + Math.cos(t * (0.4 + R()) + i) * wobble;
+    
+    // Color influenced by sentiment
+    const hue = (i % 2 === 0 ? baseHue1 : baseHue2) + R() * 0.1;
+    const [r, g, b] = hslToRgb(hue % 1, 0.8, 0.6);
+    
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${r},${g},${b},${0.15 + M.vol * 0.1})`;
+    ctx.fill();
+  }
+  
+  // Grid lines (intensity based on volatility)
+  ctx.strokeStyle = `rgba(255,255,255,${0.03 + M.vol * 0.05})`;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 20; i++) {
+    const offset = (t * 20 * (1 + M.vol)) % 25;
+    ctx.beginPath();
+    ctx.moveTo(0, i * 25 + offset);
+    ctx.lineTo(500, i * 25 + offset);
+    ctx.stroke();
+  }
+  
+  // Glitch blocks (more frequent with volatility)
+  if (R() < 0.1 + M.vol * 0.2) {
+    const gx = Math.floor(R() * 10) * 50;
+    const gy = Math.floor(R() * 10) * 50;
+    const gw = 20 + R() * 80;
+    const gh = 5 + R() * 30;
+    const hue = M.sent > 0 ? 0.5 : 0.85;
+    const [r, g, b] = hslToRgb(hue, 0.9, 0.6);
+    ctx.fillStyle = `rgba(${r},${g},${b},${0.3 + M.vol * 0.3})`;
+    ctx.fillRect(gx, gy, gw, gh);
+  }
+  
+  // Center text
+  ctx.font = 'bold 32px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = M.sent > 0 ? '#0ff' : '#f0f';
+  ctx.fillText('VECTOR DREAM', 250, 230);
+  ctx.font = '18px Courier New';
+  ctx.fillStyle = '#fff8';
+  ctx.fillText('#1', 250, 260);
+  ctx.font = '12px Courier New';
+  ctx.fillStyle = '#666';
+  ctx.fillText('market reactive', 250, 290);
+  
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+// Fetch real market data
+async function fetchReal() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+    const d = await r.json();
+    setMarket(d.bitcoin.usd_24h_change || 0, d.ethereum.usd_24h_change || 0);
+  } catch(e) {}
+}
+fetchReal();
+</script>
+</body>
+</html>
