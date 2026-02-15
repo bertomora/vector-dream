@@ -9,6 +9,9 @@ on:
 jobs:
   process:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: glitch-nft
     
     steps:
       - name: Checkout
@@ -19,6 +22,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: glitch-nft/package-lock.json
       
       - name: Install dependencies
         run: npm ci
@@ -43,9 +47,10 @@ jobs:
         run: node scripts/process-new-mints.js
       
       - name: Commit processed mints
+        working-directory: .
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add .processed-mints.json
+          git add glitch-nft/.processed-mints.json
           git diff --staged --quiet || git commit -m "Update processed mints [skip ci]"
           git push
