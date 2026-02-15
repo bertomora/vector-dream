@@ -6,7 +6,12 @@
 
 ## 🎨 About
 
-Vector Dream is a collection of generative 3D vaporwave artworks living permanently on the Ethereum blockchain. Each piece is unique, determined by a seed, and reacts dynamically to real-time cryptocurrency market data.
+Vector Dream is a **limited edition** collection of generative 3D vaporwave artworks living permanently on the **Base** blockchain. Each piece is unique, determined by a seed you choose, and reacts dynamically to real-time cryptocurrency market data.
+
+### ⚡ Collection: Series 1
+- **Supply:** 100 pieces only
+- **Chain:** Base
+- **Price:** 0.005 ETH
 
 **Features:**
 - 🔮 6 unique scene types (busts, crystals, pyramids, etc.)
@@ -15,6 +20,7 @@ Vector Dream is a collection of generative 3D vaporwave artworks living permanen
 - ♾️ Infinite, never-repeating animation
 - 💾 100% on-chain metadata, art stored permanently on Arweave
 - 🌐 Pure WebGL/GLSL — no images, videos, or external dependencies
+- 🎯 **You pick your seed** — preview before you mint!
 
 ## 🚀 Quick Start
 
@@ -173,6 +179,22 @@ Data fetched from CoinGecko API (free, no key needed).
 - **Contract**: Immutable after deployment (except Arweave URL for emergencies)
 
 Even if this project disappears, your NFT and its art will exist as long as Ethereum and Arweave exist.
+
+## 🔮 Future Collections
+
+Vector Dream is designed as a series of limited drops. Each collection features unique generative algorithms:
+
+| Series | Name | Supply | Status |
+|--------|------|--------|--------|
+| 1 | Vaporwave Dreams | 100 | Current |
+| 2 | ??? | 100 | Coming Soon |
+| 3 | ??? | 100 | Coming Soon |
+
+To create a new collection:
+1. Create new generative art HTML
+2. Deploy new contract with `npm run deploy:base`
+3. Update `mint.html` with new contract address
+4. Each series = separate contract, separate art, same brand
 
 ## 📜 License
 

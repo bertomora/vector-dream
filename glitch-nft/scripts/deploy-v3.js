@@ -1,6 +1,6 @@
 /**
- * Deploy VectorDreamV2 contract to Base
- * Features: Inline SVG thumbnails, on-chain metadata, Arweave animation
+ * Deploy VectorDreamV3 contract to Base
+ * Features: On-chain metadata, external image API for thumbnails, animation_url for WebGL
  */
 const hre = require("hardhat");
 const fs = require("fs");
@@ -8,14 +8,15 @@ const path = require("path");
 
 async function main() {
   const network = hre.network.name;
-  console.log(`\n🚀 Deploying VectorDreamV2 to ${network}...\n`);
+  console.log(`\n🚀 Deploying VectorDreamV3 to ${network}...\n`);
 
   const mintPrice = hre.ethers.parseEther("0.002");
 
   console.log("Mint Price:", hre.ethers.formatEther(mintPrice), "ETH");
   console.log("Max Supply: 100 (hardcoded)");
-  console.log("Thumbnail: Inline SVG (on-chain)");
-  console.log("Animation: Arweave\n");
+  console.log("Metadata: On-chain JSON");
+  console.log("Thumbnail: External API (/api/image?seed=)");
+  console.log("Animation: Live WebGL\n");
 
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deployer:", deployer.address);
@@ -24,13 +25,13 @@ async function main() {
   console.log("Balance:", hre.ethers.formatEther(balance), "ETH\n");
 
   // Deploy
-  const VectorDream = await hre.ethers.getContractFactory("VectorDreamArweave");
-  const contract = await VectorDream.deploy();
+  const VectorDream = await hre.ethers.getContractFactory("VectorDreamV3");
+  const contract = await VectorDream.deploy(mintPrice);
   
   await contract.waitForDeployment();
   const address = await contract.getAddress();
 
-  console.log("\n✅ VectorDream deployed!");
+  console.log("\n✅ VectorDreamV3 deployed!");
   console.log("Contract:", address);
 
   // Save deployment info
@@ -40,6 +41,7 @@ async function main() {
     mintPrice: mintPrice.toString(),
     deployer: deployer.address,
     timestamp: new Date().toISOString(),
+    version: "V3"
   };
   
   fs.writeFileSync(
@@ -56,7 +58,7 @@ async function main() {
     try {
       await hre.run("verify:verify", {
         address: address,
-        constructorArguments: [],
+        constructorArguments: [mintPrice],
       });
       console.log("✅ Verified!");
     } catch (e) {

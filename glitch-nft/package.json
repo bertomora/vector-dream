@@ -1,33 +1,50 @@
 {
   "name": "vector-dream-nft",
   "version": "1.0.0",
-  "description": "Generative vaporwave NFT collection on ETH",
+  "description": "Generative vaporwave NFT collection on Base",
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
     "deploy:mainnet": "hardhat run scripts/deploy.js --network mainnet",
+    "deploy:base-sepolia": "hardhat run scripts/deploy.js --network baseSepolia",
+    "deploy:base": "hardhat run scripts/deploy.js --network base",
     "deploy:onchain:sepolia": "hardhat run scripts/deploy-onchain.js --network sepolia",
     "deploy:onchain:mainnet": "hardhat run scripts/deploy-onchain.js --network mainnet",
+    "deploy:onchain:base-sepolia": "hardhat run scripts/deploy-onchain.js --network baseSepolia",
+    "deploy:onchain:base": "hardhat run scripts/deploy-onchain.js --network base",
     "daily:sepolia": "hardhat run scripts/daily-mint.js --network sepolia",
     "daily:mainnet": "hardhat run scripts/daily-mint.js --network mainnet",
+    "daily:base": "hardhat run scripts/daily-mint.js --network base",
     "upload:arweave": "node scripts/upload-arweave.js",
+    "upload:irys": "node scripts/upload-irys.js",
     "mint": "node scripts/mint.js",
     "list:opensea": "node scripts/list-opensea.js",
+    "verify:base-sepolia": "hardhat verify --network baseSepolia",
+    "verify:base": "hardhat verify --network base",
     "full-deploy": "npm run upload:arweave && npm run deploy:mainnet",
+    "full-deploy:base": "npm run upload:arweave && npm run deploy:base",
     "full-deploy:onchain": "npm run deploy:onchain:mainnet",
     "dev": "http-server . -p 8080 -c-1"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.0",
+    "@irys/sdk": "^0.2.11",
     "@opensea/seaport-js": "^4.0.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "@sparticuz/chromium": "^143.0.4",
+    "@vercel/og": "^0.8.6",
     "arweave": "^1.14.0",
     "dotenv": "^16.3.0",
-    "ethers": "^6.9.0"
+    "ethers": "^6.9.0",
+    "gif-encoder-2": "^1.0.5",
+    "png-js": "^1.0.0",
+    "pngjs": "^7.0.0",
+    "puppeteer-core": "^24.37.3"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "hardhat": "^2.19.0",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "puppeteer": "^24.37.3"
   }
 }

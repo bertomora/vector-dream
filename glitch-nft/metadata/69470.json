@@ -1,0 +1,11 @@
+{
+  "name": "Vector Dream #1",
+  "description": "Pure generative code art. Live WebGL running forever on Arweave. Seed: 69470",
+  "image": "https://arweave.net/QlRtLXr6tlDNeBVcGidiTTos4DzPrwwfWFi1vwvjpsk",
+  "animation_url": "https://arweave.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8?seed=69470",
+  "external_url": "https://vector-dream.vercel.app",
+  "attributes": [
+    {"trait_type": "Seed", "value": "69470"},
+    {"trait_type": "Type", "value": "Generative Code"}
+  ]
+}

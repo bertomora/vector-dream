@@ -1,0 +1,7 @@
+{
+  "name": "vector-dream",
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "cleanUrls": false,
+  "trailingSlash": false
+}

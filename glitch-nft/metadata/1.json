@@ -1,0 +1,25 @@
+{
+  "name": "Vector Dream #1",
+  "description": "Generative cyber glitch art with real-time crypto market data influence. Each piece is永久 stored on Arweave. Seed: 76722",
+  "image": "ar://IMAGE_HASH_1.png",
+  "animation_url": "https://arweave.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8?seed=76722",
+  "external_url": "https://vector-dream.vercel.app/?seed=76722",
+  "attributes": [
+    {
+      "trait_type": "Style",
+      "value": "Cyber Glitch"
+    },
+    {
+      "trait_type": "Seed",
+      "value": 76722
+    },
+    {
+      "trait_type": "Network",
+      "value": "Base"
+    },
+    {
+      "trait_type": "Storage",
+      "value": "Arweave"
+    }
+  ]
+}
