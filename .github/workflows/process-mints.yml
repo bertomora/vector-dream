@@ -1,6 +1,8 @@
 name: Process New Mints
 
 on:
+permissions:
+  contents: write
   schedule:
     # Run every 10 minutes
     - cron: '*/10 * * * *'
