@@ -1,7 +1,7 @@
 {
-  "name": "vector-dream",
   "buildCommand": null,
   "outputDirectory": ".",
   "cleanUrls": false,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "alias": ["vector-dreamz.vercel.app"]
 }
