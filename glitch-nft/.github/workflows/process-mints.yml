@@ -25,26 +25,13 @@ jobs:
       - name: Install Chromium for Puppeteer
         run: npx puppeteer browsers install chrome
 
-      - name: Restore processed mints from repo
+      - name: Configure git
         run: |
-          if [ -f .processed-mints.json ]; then
-            echo "Found existing processed mints"
-            cat .processed-mints.json
-          else
-            echo "{}" > .processed-mints.json
-          fi
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
 
       - name: Process new mints
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           OPENSEA_API_KEY: ${{ secrets.OPENSEA_API_KEY }}
-          CI: true
         run: node scripts/process-new-mints.js
-
-      - name: Commit processed mints
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add .processed-mints.json
-          git diff --staged --quiet || git commit -m "Update processed mints [skip ci]"
-          git push
