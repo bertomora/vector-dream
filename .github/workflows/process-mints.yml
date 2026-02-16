@@ -1,12 +1,12 @@
 name: Process New Mints
 
 on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
 permissions:
   contents: write
-  schedule:
-    # Run every 10 minutes
-    - cron: '*/10 * * * *'
-  workflow_dispatch: # Allow manual trigger
 
 jobs:
   process:
@@ -14,45 +14,38 @@ jobs:
     defaults:
       run:
         working-directory: glitch-nft
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+        with:
+          persist-credentials: true
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: glitch-nft/package-lock.json
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Install Chromium for Puppeteer
         run: npx puppeteer browsers install chrome
-      
-      - name: Restore processed mints from repo
-        run: |
-          if [ -f .processed-mints.json ]; then
-            echo "Found existing processed mints"
-            cat .processed-mints.json
-          else
-            echo "{}" > .processed-mints.json
-          fi
-      
+
       - name: Process new mints
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           OPENSEA_API_KEY: ${{ secrets.OPENSEA_API_KEY }}
           CI: true
         run: node scripts/process-new-mints.js
-      
-      - name: Commit processed mints
+
+      - name: Commit and push changes
         working-directory: .
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add glitch-nft/.processed-mints.json
-          git diff --staged --quiet || git commit -m "Update processed mints [skip ci]"
+          git add -A
+          git diff --staged --quiet || git commit -m "auto: update processed mints [skip ci]"
           git push
