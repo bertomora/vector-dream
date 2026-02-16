@@ -1,11 +1,24 @@
 /**
  * Vector Dream Metadata API
  * Unique vaporwave names + traits based on seed
+ * With Arweave images from processed mints
  */
 
 // Arweave URLs
 const ARWEAVE_ANIMATION = 'https://arweave.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8';
-const PREVIEW_BASE = 'https://vector-dream.vercel.app/previews';
+const FALLBACK_IMAGE_BASE = 'https://vector-dream.vercel.app/api/svg';
+
+// Arweave image URLs (updated by process-new-mints.js, commit to deploy)
+const ARWEAVE_IMAGES = {
+  "1": "https://arweave.net/0dU4C8ESkx2yeoQcBcJAKE2Nof1sfMCAKN83xnQW9oE",
+  "2": "https://arweave.net/PUk8g3SRqGdFFVk8upHQXcZdNA8I7sYpQGzWs3AQViM",
+  "3": "https://arweave.net/lnMWGqQUvcVNUUpZ1PLTtxDW7DCeFSe4SAB_fe1SzHE",
+  "4": "https://arweave.net/j2lOe68natrU72O-Y8gbQPwIzopaxtNPCkZLCnnLsQQ",
+  "5": "https://arweave.net/uFpAR2_P6Q2gH9lVKOzxmR7bnlCGkshzxDbLll7i5YQ",
+  "6": "https://arweave.net/9AFYuxs1vwGTamA3Kj67cTc9iANH_w6or1R1keT37t8",
+  "7": "https://arweave.net/6mibupU3xV7yCrn-4FMqCQqqXK56TT4CPDOcPSj5M0g",
+  "8": "https://arweave.net/FLI9Ae29n2g9fnaduvwpGxiBDGn6wMY7XCJ6EJhk6aM"
+};
 
 // Mulberry32 PRNG - deterministic from seed
 function mulberry32(seed) {
@@ -17,64 +30,109 @@ function mulberry32(seed) {
   }
 }
 
-// Trait definitions
-const TRAITS = {
-  style: ['Synthwave', 'Databend', 'Corrupt', 'Neon', 'Isometric', 'Void', 'Plasma', 'Glitch'],
-  palette: ['Pixel Cyan', 'Midnight Teal', 'Coral Aqua', 'Fuchsia Mint', 'Rose Turquoise', 
-            'Citrus Violet', 'Bronze Indigo', 'Ember Violet', 'Neon Blush', 'Chrome Sunset'],
-  composition: ['Centered', 'Scattered', 'Layered', 'Spiral', 'Grid', 'Radial', 'Fractured'],
-  energy: ['Calm', 'Pulsing', 'Chaotic', 'Flowing', 'Static', 'Explosive'],
-  depth: ['Shallow', 'Deep', 'Infinite', 'Layered', 'Flat'],
-  texture: ['Smooth', 'Grainy', 'Pixelated', 'Scanlined', 'Crystalline', 'Liquid'],
-  mood: ['Melancholic', 'Euphoric', 'Mysterious', 'Aggressive', 'Serene', 'Nostalgic']
-};
+// ═══════════════════════════════════════════════════════════════
+// V A P O R W A V E   N A M I N G   S Y S T E M
+// Names tied to visual properties (colors, style)
+// ═══════════════════════════════════════════════════════════════
 
-// Vaporwave name components
-const NAME_PARTS = {
-  prefix: ['Neo', 'Cyber', 'Neon', 'Digital', 'Synth', 'Vapor', 'Crystal', 'Chrome', 
-           'Pixel', 'Laser', 'Holo', 'Retro', 'Astral', 'Quantum', 'Void', 'Echo'],
-  core: ['Dream', 'Wave', 'Pulse', 'Grid', 'Flux', 'Storm', 'Drift', 'Bloom', 
-         'Surge', 'Prism', 'Haze', 'Burst', 'Flow', 'Glow', 'Fade', 'Rush'],
-  suffix: ['Protocol', 'System', 'Matrix', 'Zone', 'Sector', 'Dimension', 'Realm', 
-           'Horizon', 'Spectrum', 'Network', 'Core', 'Loop', 'Verse', 'Scape']
-};
+// Color palette names (matches SVG generator colors)
+const colorNames = ['Sakura', 'Ultraviolet', 'Cyan', 'Seafoam', 'Azure', 'Sunset', 'Coral', 'Amethyst'];
 
-// Japanese-style additions (optional flavor)
-const JAPANESE = ['零', '夢', '波', '光', '影', '空', '星', '風', '雲', '龍'];
+// Vaporwave prefix (tied to primary color)
+const vaporPrefix = [
+  'Velvet',      // pink
+  'Prism',       // purple
+  'Chrome',      // cyan
+  'Palm',        // green
+  'Vapor',       // blue
+  'Marble',      // gold
+  'Holo',        // coral
+  'Laser'        // violet
+];
 
-function generateTraits(seed) {
-  const rand = mulberry32(seed);
+// Digital/light/glitch words (tied to secondary color)
+const vaporPlaces = [
+  'Signal',      // pink - tech
+  'Pulse',       // purple - light/tech
+  'Grid',        // cyan - vector/geometry
+  'Ray',         // green - light
+  'Buffer',      // blue - tech
+  'Bloom',       // gold - light effect
+  'Static',      // coral - glitch
+  'Drift'        // violet - dreamy
+];
+
+// Moods (tied to combined color relationship)
+const moods = ['Nostalgic', 'Ethereal', 'Melancholic', 'Euphoric', 'Serene', 'Electric', 'Hazy', 'Transcendent'];
+
+// Eras
+const eras = ['1984', '1987', '1991', '1995', '1999', '2001'];
+
+// Styles (visual rendering style) - Void is RARE
+const styles = ['Synthwave', 'Databend', 'Corrupt', 'Neon', 'Isometric', 'Void'];
+
+function generateTraitsFromSeed(seed) {
+  const primaryIdx = seed % 8;
+  const secondaryIdx = Math.floor(seed / 8) % 8;
+  const moodIdx = (primaryIdx + secondaryIdx) % 8;
+  const eraIdx = Math.floor(seed / 64) % 6;
+  
+  // Style selection matches art.html (Void is ~5% rare)
+  const R = mulberry32(seed);
+  const variantRoll = R();
+  let styleIdx;
+  if (variantRoll < 0.19) styleIdx = 0;        // Synthwave ~19%
+  else if (variantRoll < 0.38) styleIdx = 1;   // Databend ~19%
+  else if (variantRoll < 0.57) styleIdx = 2;   // Corrupt ~19%
+  else if (variantRoll < 0.76) styleIdx = 3;   // Neon ~19%
+  else if (variantRoll < 0.95) styleIdx = 4;   // Isometric ~19%
+  else styleIdx = 5;                            // Void ~5% RARE
   
   return {
-    style: TRAITS.style[Math.floor(rand() * TRAITS.style.length)],
-    palette: TRAITS.palette[Math.floor(rand() * TRAITS.palette.length)],
-    composition: TRAITS.composition[Math.floor(rand() * TRAITS.composition.length)],
-    energy: TRAITS.energy[Math.floor(rand() * TRAITS.energy.length)],
-    depth: TRAITS.depth[Math.floor(rand() * TRAITS.depth.length)],
-    texture: TRAITS.texture[Math.floor(rand() * TRAITS.texture.length)],
-    mood: TRAITS.mood[Math.floor(rand() * TRAITS.mood.length)]
+    style: styles[styleIdx],
+    primaryColor: colorNames[primaryIdx],
+    secondaryColor: colorNames[secondaryIdx],
+    mood: moods[moodIdx],
+    era: eras[eraIdx],
+    primaryIdx,
+    secondaryIdx
   };
 }
 
-function generateName(seed, tokenId) {
-  const rand = mulberry32(seed + 12345); // Offset seed for name generation
+function generateName(seed, tokenId, traits) {
+  const { primaryIdx, secondaryIdx } = traits;
+  return `${vaporPrefix[primaryIdx]} ${vaporPlaces[secondaryIdx]} #${tokenId}`;
+}
+
+function generateDescription(seed, traits) {
+  const { style, primaryColor, secondaryColor, mood, era } = traits;
   
-  const prefix = NAME_PARTS.prefix[Math.floor(rand() * NAME_PARTS.prefix.length)];
-  const core = NAME_PARTS.core[Math.floor(rand() * NAME_PARTS.core.length)];
-  const suffix = NAME_PARTS.suffix[Math.floor(rand() * NAME_PARTS.suffix.length)];
-  const jp = JAPANESE[Math.floor(rand() * JAPANESE.length)];
-  
-  // Various name formats
-  const formats = [
-    `${prefix}${core} ${jp}`,
-    `${prefix} ${core}${suffix}`,
-    `${jp} ${prefix}${core}`,
-    `${core}${suffix} ${jp}`,
-    `${prefix}${suffix}`,
+  // Poetic description templates
+  const templates = [
+    () => `${mood} transmissions from ${era}. ${primaryColor} light bleeds into ${secondaryColor.toLowerCase()} static.`,
+    () => `A ${style.toLowerCase()} dream suspended in ${era}. ${primaryColor} and ${secondaryColor.toLowerCase()} frequencies collide.`,
+    () => `${era}. ${mood} waves ripple through ${primaryColor.toLowerCase()} and ${secondaryColor.toLowerCase()} vectors.`,
+    () => `Echoes of ${era} rendered in ${style.toLowerCase()} haze. ${primaryColor} pulses against ${secondaryColor.toLowerCase()} void.`,
+    () => `${mood} artifacts from the ${era} signal. A ${primaryColor.toLowerCase()}-${secondaryColor.toLowerCase()} drift.`,
+    () => `Lost ${style.toLowerCase()} broadcast, circa ${era}. ${primaryColor} fading into ${secondaryColor.toLowerCase()}.`,
+    () => `${primaryColor} dreams refracted through ${secondaryColor.toLowerCase()} memory. ${mood}, ${era}.`,
+    () => `Digital ${mood.toLowerCase()} from ${era}. ${style} aesthetics in ${primaryColor.toLowerCase()} and ${secondaryColor.toLowerCase()}.`
   ];
   
-  const name = formats[Math.floor(rand() * formats.length)];
-  return `${name} #${tokenId}`;
+  const templateIdx = seed % 8;
+  
+  // Handle same-color case
+  if (primaryColor === secondaryColor) {
+    const pureTemplates = [
+      `Pure ${primaryColor.toLowerCase()} ${mood.toLowerCase()} from ${era}. ${style} dreams in monochrome.`,
+      `${era}. A singular ${primaryColor.toLowerCase()} frequency. ${mood} and infinite.`,
+      `${style} transmission in pure ${primaryColor.toLowerCase()}. ${mood} echoes from ${era}.`,
+      `All ${primaryColor.toLowerCase()}. All ${mood.toLowerCase()}. ${era}.`
+    ];
+    return pureTemplates[seed % 4];
+  }
+  
+  return templates[templateIdx]();
 }
 
 module.exports = async (req, res) => {
@@ -86,28 +144,28 @@ module.exports = async (req, res) => {
   const id = parseInt(tokenId) || 1;
   const seed = parseInt(seedParam) || id;
 
-  // Generate deterministic traits and name from seed
-  const traits = generateTraits(seed);
-  const uniqueName = generateName(seed, id);
+  // Generate deterministic traits from seed
+  const traits = generateTraitsFromSeed(seed);
+  const uniqueName = generateName(seed, id, traits);
+  const description = generateDescription(seed, traits);
+
+  // Use Arweave image if available, otherwise fallback to SVG endpoint
+  const imageUrl = ARWEAVE_IMAGES[id.toString()] || `${FALLBACK_IMAGE_BASE}/${seed}`;
 
   // Build attributes array
   const attributes = [
     { trait_type: "Style", value: traits.style },
-    { trait_type: "Palette", value: traits.palette },
-    { trait_type: "Composition", value: traits.composition },
-    { trait_type: "Energy", value: traits.energy },
-    { trait_type: "Depth", value: traits.depth },
-    { trait_type: "Texture", value: traits.texture },
+    { trait_type: "Primary Aura", value: traits.primaryColor },
+    { trait_type: "Secondary Aura", value: traits.secondaryColor },
     { trait_type: "Mood", value: traits.mood },
-    { trait_type: "Seed", value: seed.toString() },
-    { trait_type: "Type", value: "Generative" },
-    { trait_type: "Interactive", value: "Yes" }
+    { trait_type: "Era", value: traits.era },
+    { trait_type: "Seed", value: seed.toString() }
   ];
 
   const metadata = {
     name: uniqueName,
-    description: `An interactive generative vector art piece. Style: ${traits.style}, Palette: ${traits.palette}, Mood: ${traits.mood}. Each piece is unique, determined by seed ${seed}.`,
-    image: `${PREVIEW_BASE}/${seed}.png`,
+    description: description,
+    image: imageUrl,
     animation_url: `${ARWEAVE_ANIMATION}?seed=${seed}`,
     external_url: "https://vector-dream.vercel.app",
     attributes

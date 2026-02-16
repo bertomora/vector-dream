@@ -141,10 +141,10 @@ function gen(s) {
   ];
   const pal = pals[Math.floor(R() * pals.length)];
   
-  // === COLOR INTENSITY (varies dramatically) ===
-  const satBoost = R() < 0.4 ? 0.2 : (R() < 0.7 ? 0 : -0.15);
-  const colorIntensity = 0.45 + R() * 0.7 + satBoost; // 0.45 to 1.35
-  const colorShift = (R() - 0.5) * 140;    // -70 to +70 hue shift (was ±40)
+  // === COLOR INTENSITY (varies dramatically - MORE RANGE) ===
+  const satBoost = R() < 0.3 ? 0.35 : (R() < 0.6 ? 0 : -0.2);
+  const colorIntensity = 0.35 + R() * 0.9 + satBoost; // 0.35 to 1.45 (wider range)
+  const colorShift = (R() - 0.5) * 200;    // -100 to +100 hue shift (was ±70)
   
   // === BRIGHTNESS/CONTRAST (elegant, never overblown) ===
   const brightness = 0.7 + R() * 0.3;    // 0.7 to 1.0
@@ -157,12 +157,12 @@ function gen(s) {
     bgType: bgType,
     brightness: brightness,
     // Colors with maximum variation - each color gets independent shift
-    h1: pal[0] + colorShift + (R()-.5)*120,
-    h2: pal[1] + (R()-.5)*100 + (R()-.5)*80,  // independent of colorShift
-    h3: pal[2] + (R()-.5)*140,                 // fully independent
+    h1: pal[0] + colorShift + (R()-.5)*180,    // more variation
+    h2: pal[1] + (R()-.5)*160 + (R()-.5)*100,  // independent of colorShift, wider range
+    h3: pal[2] + (R()-.5)*200,                 // fully independent, widest range
     colorIntensity: colorIntensity,
-    // All effects start at 0 (pixelSize gets randomized baseline)
-    clusters: 0, density: 0, pixelSize: 2 + Math.floor(R() * 4), scatter: 0,
+    // All effects start at 0 (pixelSize gets randomized baseline - MORE RANGE)
+    clusters: 0, density: 0, pixelSize: 1 + Math.floor(R() * 6), scatter: 0,
     glitchAmt: 0, rectGlitch: 0, diagStreak: 0,
     spireCount: 0, spireIntensity: 0, gridIntensity: 0, horizonGlow: 0, bandGlitch: 0,
     spireSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
@@ -183,14 +183,14 @@ function gen(s) {
     bgNoiseScale: 5 + R() * 20
   };
   
-  // === ZONE OFFSETS (more dramatic positioning) ===
-  if (zone === 'top') { C.zoneOffsetY = 0.25 + R() * 0.35; }
-  else if (zone === 'bottom') { C.zoneOffsetY = -0.25 - R() * 0.35; }
-  else if (zone === 'left') { C.zoneOffsetX = -0.25 - R() * 0.35; }
-  else if (zone === 'right') { C.zoneOffsetX = 0.25 + R() * 0.35; }
-  else if (zone === 'edges') { C.zoneOffsetX = (R() < 0.5 ? -1 : 1) * (0.35 + R() * 0.3); }
-  else if (zone === 'center') { C.zoneOffsetX = (R() - 0.5) * 0.2; C.zoneOffsetY = (R() - 0.5) * 0.2; }
-  else if (zone === 'scattered') { C.zoneOffsetX = (R() - 0.5) * 0.5; C.zoneOffsetY = (R() - 0.5) * 0.5; }
+  // === ZONE OFFSETS (even more dramatic positioning) ===
+  if (zone === 'top') { C.zoneOffsetY = 0.3 + R() * 0.45; }
+  else if (zone === 'bottom') { C.zoneOffsetY = -0.3 - R() * 0.45; }
+  else if (zone === 'left') { C.zoneOffsetX = -0.3 - R() * 0.45; }
+  else if (zone === 'right') { C.zoneOffsetX = 0.3 + R() * 0.45; }
+  else if (zone === 'edges') { C.zoneOffsetX = (R() < 0.5 ? -1 : 1) * (0.4 + R() * 0.4); }
+  else if (zone === 'center') { C.zoneOffsetX = (R() - 0.5) * 0.25; C.zoneOffsetY = (R() - 0.5) * 0.25; }
+  else if (zone === 'scattered') { C.zoneOffsetX = (R() - 0.5) * 0.7; C.zoneOffsetY = (R() - 0.5) * 0.7; }
   
   // === STYLE-SPECIFIC OVERRIDES (with A/B/C sub-variants) ===
   if (style === 'synthwave') {
