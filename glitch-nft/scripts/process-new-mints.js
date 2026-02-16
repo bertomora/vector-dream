@@ -146,22 +146,53 @@ async function main() {
   
   await browser.close();
   
-  // Redeploy to Vercel to update metadata API with new Arweave URLs
-  // Skip in CI - the git commit will trigger Vercel deploy automatically
-  if (newMints.length > 0 && !process.env.CI) {
-    console.log('\n🚀 Redeploying to Vercel...');
+  // Update the API file with new Arweave URLs and deploy
+  if (newMints.length > 0) {
+    console.log('\n📝 Updating API with new Arweave URLs...');
     const { execSync } = require('child_process');
+    
     try {
-      execSync('vercel --prod --yes', { 
+      // Build the new ARWEAVE_IMAGES object
+      const imageEntries = Object.entries(processed)
+        .sort((a, b) => Number(a[0]) - Number(b[0]))
+        .map(([id, info]) => `  "${id}": "${info.arweaveUrl}"`)
+        .join(',\n');
+      
+      const newImagesBlock = `// Arweave image URLs (updated by process-new-mints.js, commit to deploy)
+const ARWEAVE_IMAGES = {
+${imageEntries}
+};`;
+      
+      // Read the API file
+      const apiPath = path.join(__dirname, '..', 'api', 'dynamic', '[tokenId].js');
+      let apiContent = fs.readFileSync(apiPath, 'utf8');
+      
+      // Replace the ARWEAVE_IMAGES block
+      apiContent = apiContent.replace(
+        /\/\/ Arweave image URLs.*?const ARWEAVE_IMAGES = \{[\s\S]*?\};/,
+        newImagesBlock
+      );
+      
+      fs.writeFileSync(apiPath, apiContent);
+      console.log('  ✅ API file updated');
+      
+      // Commit and push
+      console.log('\n🚀 Deploying to Vercel via git push...');
+      execSync('git add -A', { cwd: path.join(__dirname, '..') });
+      execSync(`git commit -m "auto: update Arweave URLs for tokens ${newMints.map(m => m.tokenId).join(', ')}"`, { 
         cwd: path.join(__dirname, '..'),
-        stdio: 'inherit' 
+        stdio: 'inherit'
+      });
+      execSync('git push', { 
+        cwd: path.join(__dirname, '..'),
+        stdio: 'inherit'
       });
       console.log('✅ Deployed!');
+      
     } catch (e) {
-      console.log('⚠️ Deploy failed, run manually: vercel --prod --yes');
+      console.log(`⚠️ Auto-deploy failed: ${e.message}`);
+      console.log('Run manually: git add -A && git commit -m "update arweave urls" && git push');
     }
-  } else if (newMints.length > 0 && process.env.CI) {
-    console.log('\n☁️ Running in CI - Vercel will auto-deploy from git push');
   }
   
   console.log('\n🎉 Done!');
