@@ -93,15 +93,23 @@
         .content {
             flex: 1;
             display: flex;
-            gap: 50px;
-            align-items: flex-start;
+            gap: 30px;
+            align-items: center;
             justify-content: center;
         }
         
         /* Art section */
         .art-section {
-            width: 550px;
+            width: 500px;
             flex-shrink: 0;
+        }
+        
+        /* Center controls between blocks */
+        .center-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
         }
         
         .art-frame {
@@ -120,12 +128,15 @@
             border: none;
         }
         
-        .art-controls {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-            justify-content: center;
-            width: 100%;
+        .center-controls .btn-gen {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            padding: 30px 14px;
+            font-size: 0.85rem;
+        }
+        
+        .center-controls .btn-nav {
+            padding: 12px 14px;
         }
         
         .btn-gen {
@@ -167,13 +178,13 @@
         
         /* Mint panel */
         .mint-panel {
-            width: 550px;
-            height: 550px;
+            width: 500px;
+            height: 500px;
             flex-shrink: 0;
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 20px;
-            padding: 35px;
+            padding: 30px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -391,11 +402,21 @@
             .content {
                 flex-direction: column;
                 align-items: center;
-                gap: 40px;
+                gap: 25px;
             }
             
-            .art-section { width: 100%; max-width: 500px; }
-            .mint-panel { width: 100%; max-width: 500px; height: auto; }
+            .art-section { width: 100%; max-width: 450px; }
+            .mint-panel { width: 100%; max-width: 450px; height: auto; }
+            
+            .center-controls {
+                flex-direction: row;
+                gap: 12px;
+            }
+            
+            .center-controls .btn-gen {
+                writing-mode: horizontal-tb;
+                padding: 14px 30px;
+            }
         }
         
         @media (min-width: 1200px) {
@@ -430,11 +451,12 @@
                 <div class="art-frame">
                     <iframe id="preview" src="art.html"></iframe>
                 </div>
-                <div class="art-controls">
-                    <button class="btn-nav" id="btn-back" disabled>◀</button>
-                    <button class="btn-gen" onclick="generate()">Generate New</button>
-                    <button class="btn-nav" id="btn-forward" disabled>▶</button>
-                </div>
+            </div>
+            
+            <div class="center-controls">
+                <button class="btn-nav" id="btn-back" disabled>◀</button>
+                <button class="btn-gen" onclick="generate()">Generate New</button>
+                <button class="btn-nav" id="btn-forward" disabled>▶</button>
             </div>
             
             <div class="mint-panel">
