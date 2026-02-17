@@ -61,9 +61,24 @@
             min-height: 100vh;
             position: relative;
             z-index: 1;
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 10px;
+            padding: 15px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 15px 10px;
+            border-bottom: 1px solid rgba(120, 115, 245, 0.2);
+            margin-bottom: 15px;
+        }
+        
+        /* Content wrapper */
+        .content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
         }
         
         /* Preview Side */
@@ -426,28 +441,37 @@
         /* Desktop layout - side by side with bigger art */
         @media (min-width: 900px) {
             .main {
-                flex-direction: row;
-                max-width: 1300px;
+                flex-direction: column;
+                max-width: 1200px;
                 padding: 30px 50px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+                margin-bottom: 30px;
+            }
+            
+            .header .logo h1 { font-size: 2.5rem; }
+            .header .logo .sub { font-size: 0.85rem; margin-top: 10px; letter-spacing: 4px; }
+            .header .badges { margin: 20px 0; }
+            .header .badge { padding: 10px 20px; font-size: 0.85rem; }
+            .header .description { font-size: 0.85rem; max-width: 700px; margin: 0 auto; line-height: 1.8; }
+            
+            .content {
+                flex-direction: row;
                 gap: 50px;
                 justify-content: center;
-                align-items: stretch;
+                align-items: flex-start;
             }
             
             .preview-side {
                 flex: 0 0 auto;
-                padding: 20px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+                padding: 0;
             }
             
             .preview-wrap {
-                width: min(50vw, 65vh);
-                height: auto;
-                max-width: 550px;
-                max-height: none;
-                aspect-ratio: 1;
+                width: min(45vw, 55vh);
+                max-width: 500px;
             }
             
             .btn-generate {
@@ -457,35 +481,25 @@
             }
             
             .mint-side {
-                width: 420px;
+                width: 380px;
                 flex-shrink: 0;
-                border-top: none;
                 border-left: 1px solid rgba(120, 115, 245, 0.3);
-                padding: 35px 40px;
+                padding: 0 0 0 40px;
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
+                justify-content: flex-start;
             }
             
-            .logo { margin-bottom: 20px; }
-            .logo h1 { font-size: 2rem; }
-            .logo .sub { font-size: 0.75rem; margin-top: 8px; letter-spacing: 3px; }
-            
-            .badges { margin-bottom: 20px; }
-            .badge { padding: 8px 16px; font-size: 0.8rem; }
-            
-            .description { font-size: 0.8rem; margin-bottom: 25px; line-height: 1.7; }
-            
-            .stats { padding: 18px; margin-bottom: 25px; }
+            .stats { padding: 18px; margin-bottom: 20px; }
             .stat-row { padding: 12px 0; font-size: 0.95rem; }
             .stat-label { font-size: 0.8rem; letter-spacing: 2px; }
             
-            .btn { padding: 18px; font-size: 0.9rem; margin-bottom: 12px; }
+            .btn { padding: 16px; font-size: 0.9rem; margin-bottom: 10px; }
             
             .wallet-info { padding: 14px; font-size: 0.85rem; margin-bottom: 15px; }
             
-            .mint-note { font-size: 0.75rem; margin-top: 20px; }
-            .footer { padding-top: 20px; }
+            .mint-note { font-size: 0.75rem; margin-top: 15px; }
+            .footer { padding-top: 15px; }
             .footer a { font-size: 0.75rem; }
             .footer a { font-size: 0.65rem; margin: 0 8px; }
         }
@@ -515,19 +529,8 @@
     <div class="scanlines"></div>
     
     <div class="main">
-        <div class="preview-side">
-            <div class="preview-wrap">
-                <div class="preview-glow"></div>
-                <iframe class="preview-frame" id="preview" src="art.html"></iframe>
-            </div>
-            <div class="nav-buttons">
-                <button class="btn-nav" onclick="goBack()" id="btn-back" disabled>◀</button>
-                <button class="btn-generate" onclick="generate()">GENERATE</button>
-                <button class="btn-nav" onclick="goForward()" id="btn-forward" disabled>▶</button>
-            </div>
-        </div>
-        
-        <div class="mint-side">
+        <!-- Header -->
+        <header class="header">
             <div class="logo">
                 <h1>VΞCTOR DRΞΛM</h1>
                 <div class="sub">GENERATIVE ART ON BASE</div>
@@ -552,8 +555,24 @@
                 <span style="color:#7873f5">◇ Feeling lucky? Try <strong>RANDOM MINT</strong> ◇</span><br><br>
                 <span style="color:#555">Six styles: Synthwave • Databend • Corrupt • Neon • Isometric • Void (5% rare) — VHS wobble, CRT scanlines, film grain.</span>
             </p>
+        </header>
+        
+        <!-- Content: Art + Controls -->
+        <div class="content">
+            <div class="preview-side">
+                <div class="preview-wrap">
+                    <div class="preview-glow"></div>
+                    <iframe class="preview-frame" id="preview" src="art.html"></iframe>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn-nav" onclick="goBack()" id="btn-back" disabled>◀</button>
+                    <button class="btn-generate" onclick="generate()">GENERATE</button>
+                    <button class="btn-nav" onclick="goForward()" id="btn-forward" disabled>▶</button>
+                </div>
+            </div>
             
-            <div class="stats">
+            <div class="mint-side">
+                <div class="stats">
                 <div class="stat-row">
                     <span class="stat-label">Price</span>
                     <span class="stat-value" id="price">0.004 ETH</span>
@@ -591,6 +610,7 @@
             <div class="footer">
                 <a href="https://basescan.org/address/0xbae88927f84adc3a16aa3a41340631f5f285fa0a" target="_blank">Contract</a>
                 <a href="https://opensea.io/collection/vector-dreamz" target="_blank">OpenSea</a>
+            </div>
             </div>
         </div>
     </div>
