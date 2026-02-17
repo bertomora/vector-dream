@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>VΞCTOR DRΞΛM - BAND MELT</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    body { background: #000; overflow: hidden; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    canvas { display: block; width: 100%; height: 100%; max-width: 100vmin; max-height: 100vmin; image-rendering: pixelated; }
+    #ui {
+      position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 12px; align-items: center; z-index: 100;
+      background: rgba(0,0,0,0.9); padding: 10px 20px; border: 1px solid #f0f3;
+    }
+    #ui button { background: transparent; border: 1px solid #0ff; color: #0ff; padding: 6px 14px; font: 10px monospace; cursor: pointer; }
+    #ui button:hover { background: #0ff1; }
+    .info { color: #f0f8; font-size: 9px; }
+    #controls {
+      position: fixed; top: 15px; left: 15px; z-index: 100;
+      background: rgba(0,0,0,0.9); padding: 15px; border: 1px solid #f003;
+      font-size: 11px; color: #fff;
+    }
+    #controls label { display: block; margin: 6px 0; }
+    #controls input[type="range"] { width: 120px; }
+    #controls span { color: #0ff; min-width: 35px; display: inline-block; }
+    .section { color: #f0f; margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="controls">
+  <strong style="color:#f0f;font-size:13px">🎯 BAND MELT 🎯</strong>
+  
+  <div class="section">GLITCH BANDS</div>
+  <label>Band Count: <input type="range" id="bandCountSlider" min="1" max="12" value="5"> <span id="bandCountVal">5</span></label>
+  <label>Band Height: <input type="range" id="bandHeightSlider" min="0" max="100" value="50"> <span id="bandHeightVal">0.50</span></label>
+  
+  <div class="section">MELT FX (in bands)</div>
+  <label>Vertical Smear: <input type="range" id="smearSlider" min="0" max="100" value="75"> <span id="smearVal">0.75</span></label>
+  <label>RGB Split: <input type="range" id="rgbSlider" min="0" max="100" value="70"> <span id="rgbVal">0.70</span></label>
+  <label>Wave Warp: <input type="range" id="waveSlider" min="0" max="100" value="60"> <span id="waveVal">0.60</span></label>
+  
+  <div class="section">BASE ART</div>
+  <label>Clusters: <input type="range" id="clusterSlider" min="1" max="5" value="3"> <span id="clusterVal">3</span></label>
+  <label>Scatter: <input type="range" id="scatterSlider" min="0" max="100" value="20"> <span id="scatterVal">0.20</span></label>
+  <label>Pixel Size: <input type="range" id="pixelSlider" min="2" max="6" value="3"> <span id="pixelVal">3</span></label>
+</div>
+<div id="ui">
+  <div class="info">#<span id="seed-num">0</span></div>
+  <button id="randomize">GENERATE</button>
+</div>
+
+<script>
+let FX = {
+  bandCount: 5,
+  bandHeight: 0.50,
+  vertSmear: 0.75,
+  rgbSplit: 0.70,
+  waveWarp: 0.60,
+  clusters: 3,
+  scatter: 0.20,
+  pixelSize: 3
+};
+
+document.getElementById('bandCountSlider').oninput = e => { FX.bandCount = parseInt(e.target.value); document.getElementById('bandCountVal').textContent = FX.bandCount; };
+document.getElementById('bandHeightSlider').oninput = e => { FX.bandHeight = e.target.value / 100; document.getElementById('bandHeightVal').textContent = FX.bandHeight.toFixed(2); };
+document.getElementById('smearSlider').oninput = e => { FX.vertSmear = e.target.value / 100; document.getElementById('smearVal').textContent = FX.vertSmear.toFixed(2); };
+document.getElementById('rgbSlider').oninput = e => { FX.rgbSplit = e.target.value / 100; document.getElementById('rgbVal').textContent = FX.rgbSplit.toFixed(2); };
+document.getElementById('waveSlider').oninput = e => { FX.waveWarp = e.target.value / 100; document.getElementById('waveVal').textContent = FX.waveWarp.toFixed(2); };
+document.getElementById('clusterSlider').oninput = e => { FX.clusters = parseInt(e.target.value); document.getElementById('clusterVal').textContent = FX.clusters; };
+document.getElementById('scatterSlider').oninput = e => { FX.scatter = e.target.value / 100; document.getElementById('scatterVal').textContent = FX.scatter.toFixed(2); };
+document.getElementById('pixelSlider').oninput = e => { FX.pixelSize = parseInt(e.target.value); document.getElementById('pixelVal').textContent = FX.pixelSize; };
+
+const urlParams = new URLSearchParams(window.location.search);
+let seed = parseInt(urlParams.get('seed')) || Math.floor(Math.random() * 100000);
+
+function mulberry32(a) { return function() { let t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; } }
+
+let R, C;
+
+function gen(s) {
+  seed = s; R = mulberry32(seed);
+  
+  const pals = [
+    [330, 185, 50], [320, 190, 30], [340, 175, 200], [310, 195, 15],
+    [350, 170, 280], [20, 180, 300], [280, 200, 40], [345, 160, 220],
+  ];
+  const pal = pals[Math.floor(R() * pals.length)];
+  
+  C = {
+    h1: pal[0] + (R()-.5)*80,
+    h2: pal[1] + (R()-.5)*80,
+    h3: pal[2] + (R()-.5)*80,
+    colorIntensity: 0.8 + R() * 0.4,
+    brightness: 0.85 + R() * 0.1,
+    primSeeds: [],
+    bandSeeds: [],
+    streakSeeds: [],
+  };
+  for(let i = 0; i < 5; i++) C.primSeeds.push(R() * 1000);
+  for(let i = 0; i < 12; i++) C.bandSeeds.push(R() * 1000);
+  for(let i = 0; i < 40; i++) C.streakSeeds.push(R() * 1000);
+  
+  document.getElementById('seed-num').textContent = seed + ' [BAND MELT]';
+}
+gen(seed);
+
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl');
+
+const VS = `attribute vec2 p;varying vec2 uv;void main(){uv=p*.5+.5;gl_Position=vec4(p,0,1);}`;
+
+const FS = `
+precision highp float;
+varying vec2 uv;
+uniform float t;
+uniform vec2 res;
+uniform float h1,h2,h3;
+uniform float bandCount,bandHeight,vertSmear,rgbSplit,waveWarp;
+uniform float clusters,scatter,pixelSize;
+uniform float colorIntensity,brightness;
+uniform float primSeeds[5];
+uniform float bandSeeds[12];
+uniform float streakSeeds[40];
+
+float H(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float H1(float p){return fract(sin(p*127.1)*43758.5453);}
+
+vec3 hsv(float h,float s,float v){
+  vec3 c=clamp(abs(mod(h*6.+vec3(0,4,2),6.)-3.)-1.,0.,1.);
+  return v*mix(vec3(1),c,s);
+}
+
+// Check if we're inside a glitch band, returns band intensity (0 = outside, >0 = inside)
+float inGlitchBand(float y, float time) {
+  float bandIntensity = 0.0;
+  
+  for(int i = 0; i < 12; i++) {
+    if(float(i) >= bandCount) break;
+    
+    float bs = bandSeeds[i];
+    float bandY = H1(bs);
+    float bandH = 0.02 + H1(bs + 100.0) * 0.08 * bandHeight;
+    float bandSpeed = (H1(bs + 200.0) - 0.5) * 0.15;
+    
+    // Animate band position
+    float animY = mod(bandY + time * bandSpeed, 1.3) - 0.15;
+    
+    float dist = abs(y - animY);
+    if(dist < bandH) {
+      float fade = 1.0 - dist / bandH;
+      fade = fade * fade; // sharper edges
+      bandIntensity = max(bandIntensity, fade);
+    }
+  }
+  
+  return bandIntensity;
+}
+
+void main(){
+  float pxSize = pixelSize / res.x;
+  vec2 puv = floor(uv / pxSize) * pxSize;
+  vec2 pxCoord = floor(uv * res.x / pixelSize);
+  vec2 p = (puv - 0.5) * 2.0;
+  
+  // Check if in glitch band
+  float bandAmt = inGlitchBand(puv.y, t * 0.5);
+  
+  // Base colors
+  vec3 c1 = hsv(h1 / 360.0, 0.95 * colorIntensity, 1.0);
+  vec3 c2 = hsv(h2 / 360.0, 0.9 * colorIntensity, 1.0);
+  vec3 c3 = hsv(h3 / 360.0, 0.85 * colorIntensity, 0.95);
+  vec3 c4 = hsv((h1 + 120.0) / 360.0, 0.85 * colorIntensity, 0.9);
+  
+  vec3 col = vec3(0.01, 0.006, 0.015);
+  
+  // =============================================
+  // CLEAN BASE ART (always rendered)
+  // =============================================
+  
+  // Art zones/clusters
+  for(int i = 0; i < 5; i++) {
+    if(float(i) >= clusters) break;
+    float ps = primSeeds[i];
+    
+    vec2 center = vec2(H(vec2(ps, 1.0)) * 2.0 - 1.0, H(vec2(ps, 2.0)) * 2.0 - 1.0) * 0.6;
+    float dist = length(p - center);
+    float zoneSize = 0.15 + H(vec2(ps, 3.0)) * 0.3;
+    
+    if(dist < zoneSize) {
+      float zoneFade = 1.0 - dist / zoneSize;
+      zoneFade = pow(zoneFade, 1.5);
+      
+      vec3 zoneCol = H(vec2(ps, 5.0)) < 0.5 ? c1 : c2;
+      
+      // Horizontal bands in zone
+      float bandY = floor((p.y - center.y + zoneSize) / (pxSize * 4.0));
+      float bandRand = H(vec2(bandY, ps));
+      if(bandRand < 0.5 * zoneFade) {
+        col = mix(col, zoneCol, 0.75 * zoneFade);
+      }
+    }
+  }
+  
+  // Scattered pixels
+  float noiseRand = H(pxCoord + 33.0);
+  if(noiseRand < scatter * 0.25) {
+    col = H(pxCoord + 500.0) < 0.5 ? c1 * 0.6 : c2 * 0.6;
+  }
+  
+  // =============================================
+  // GLITCH EFFECTS (only inside bands)
+  // =============================================
+  
+  if(bandAmt > 0.1) {
+    vec3 glitchCol = col;
+    vec2 glitchUV = puv;
+    
+    // === WAVE WARP (inside band only) ===
+    if(waveWarp > 0.1) {
+      float wave1 = sin(puv.y * 40.0 + t * 4.0) * waveWarp * bandAmt * 0.04;
+      float wave2 = sin(puv.y * 80.0 + t * 6.0) * waveWarp * bandAmt * 0.02;
+      glitchUV.x += wave1 + wave2;
+    }
+    
+    // === VERTICAL SMEAR STREAKS (inside band) ===
+    if(vertSmear > 0.1) {
+      for(int i = 0; i < 40; i++) {
+        float ss = streakSeeds[i];
+        
+        float streakX = H1(ss) * 1.2 - 0.1;
+        float streakWidth = 0.004 + H1(ss + 100.0) * 0.02 * vertSmear;
+        
+        float dx = abs(glitchUV.x - streakX);
+        if(dx < streakWidth) {
+          float edgeFade = 1.0 - dx / streakWidth;
+          
+          // Vertical drip within band
+          float dripPhase = H1(ss + 200.0) + t * (0.3 + H1(ss + 300.0) * 0.4);
+          float dripY = mod(dripPhase, 1.0);
+          float dripDist = abs(puv.y - dripY);
+          
+          if(dripDist < 0.15) {
+            float dripFade = 1.0 - dripDist / 0.15;
+            
+            // Streak color
+            vec3 streakCol;
+            float colPick = H1(ss + 400.0);
+            if(colPick < 0.25) streakCol = c1;
+            else if(colPick < 0.5) streakCol = c2;
+            else if(colPick < 0.75) streakCol = c3;
+            else streakCol = c4;
+            
+            float intensity = edgeFade * dripFade * bandAmt * vertSmear;
+            glitchCol = mix(glitchCol, streakCol, intensity * 0.9);
+          }
+        }
+      }
+    }
+    
+    // === RGB SPLIT (inside band) ===
+    if(rgbSplit > 0.1) {
+      float splitAmt = rgbSplit * bandAmt * 0.05;
+      
+      // Offset sampling for R and B
+      vec2 rOffset = vec2(splitAmt, splitAmt * 0.3);
+      vec2 bOffset = vec2(-splitAmt * 0.8, -splitAmt * 0.2);
+      
+      // Add wave to split
+      rOffset.x += sin(puv.y * 50.0 + t * 5.0) * rgbSplit * bandAmt * 0.02;
+      bOffset.x -= sin(puv.y * 45.0 + t * 4.5) * rgbSplit * bandAmt * 0.015;
+      
+      // Sample streaks at offset for RGB separation
+      float rIntensity = 0.0, bIntensity = 0.0;
+      vec3 rCol = c1, bCol = c3;
+      
+      for(int i = 0; i < 40; i++) {
+        float ss = streakSeeds[i];
+        float streakX = H1(ss) * 1.2 - 0.1;
+        float streakWidth = 0.004 + H1(ss + 100.0) * 0.02 * vertSmear;
+        
+        // Red channel offset
+        float rdx = abs((glitchUV.x + rOffset.x) - streakX);
+        if(rdx < streakWidth) {
+          float dripPhase = H1(ss + 200.0) + t * (0.3 + H1(ss + 300.0) * 0.4);
+          float dripDist = abs((puv.y + rOffset.y) - mod(dripPhase, 1.0));
+          if(dripDist < 0.15) {
+            rIntensity = max(rIntensity, (1.0 - rdx/streakWidth) * (1.0 - dripDist/0.15));
+            rCol = H1(ss + 400.0) < 0.5 ? c1 : c2;
+          }
+        }
+        
+        // Blue channel offset
+        float bdx = abs((glitchUV.x + bOffset.x) - streakX);
+        if(bdx < streakWidth) {
+          float dripPhase = H1(ss + 200.0) + t * (0.3 + H1(ss + 300.0) * 0.4);
+          float dripDist = abs((puv.y + bOffset.y) - mod(dripPhase, 1.0));
+          if(dripDist < 0.15) {
+            bIntensity = max(bIntensity, (1.0 - bdx/streakWidth) * (1.0 - dripDist/0.15));
+            bCol = H1(ss + 400.0) < 0.5 ? c3 : c4;
+          }
+        }
+      }
+      
+      // Apply RGB separation
+      glitchCol.r = mix(glitchCol.r, max(glitchCol.r, rCol.r * rIntensity), bandAmt * rgbSplit * 0.7);
+      glitchCol.b = mix(glitchCol.b, max(glitchCol.b, bCol.b * bIntensity), bandAmt * rgbSplit * 0.6);
+    }
+    
+    // === SCANLINE NOISE (in band) ===
+    float scanLine = floor(puv.y * res.y / 3.0);
+    float scanRand = H(vec2(scanLine, floor(t * 15.0)));
+    if(scanRand > 0.85) {
+      glitchCol = glitchCol.brg * 1.2;
+    }
+    
+    // Blend glitch into base
+    col = mix(col, glitchCol, bandAmt);
+    
+    // Band edge glow
+    float edgeGlow = bandAmt * (1.0 - bandAmt) * 4.0;
+    col += c1 * edgeGlow * 0.15;
+  }
+  
+  // =============================================
+  // FINAL POST-PROCESS (subtle, everywhere)
+  // =============================================
+  
+  // Light grain
+  float grain = (H(pxCoord + floor(t * 30.0)) - 0.5) * 0.06;
+  col += grain;
+  
+  // Vignette
+  vec2 vigUV = puv - 0.5;
+  float vig = 1.0 - length(vigUV) * 0.7;
+  col *= vig;
+  
+  col *= brightness;
+  col = clamp(col, 0.0, 1.0);
+  
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+const vs = gl.createShader(gl.VERTEX_SHADER);
+gl.shaderSource(vs, VS); gl.compileShader(vs);
+const fs = gl.createShader(gl.FRAGMENT_SHADER);
+gl.shaderSource(fs, FS); gl.compileShader(fs);
+if(!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) console.error('Shader error:', gl.getShaderInfoLog(fs));
+
+const prog = gl.createProgram();
+gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+
+const pLoc = gl.getAttribLocation(prog, 'p');
+const U = n => gl.getUniformLocation(prog, n);
+const unis = {
+  t:U('t'),res:U('res'),h1:U('h1'),h2:U('h2'),h3:U('h3'),
+  bandCount:U('bandCount'),bandHeight:U('bandHeight'),
+  vertSmear:U('vertSmear'),rgbSplit:U('rgbSplit'),waveWarp:U('waveWarp'),
+  clusters:U('clusters'),scatter:U('scatter'),pixelSize:U('pixelSize'),
+  colorIntensity:U('colorIntensity'),brightness:U('brightness'),
+  primSeeds:U('primSeeds'),bandSeeds:U('bandSeeds'),streakSeeds:U('streakSeeds')
+};
+
+canvas.width = 1000; canvas.height = 1000;
+gl.viewport(0, 0, 1000, 1000);
+
+function render(time) {
+  time *= 0.004;
+  gl.useProgram(prog);
+  gl.enableVertexAttribArray(pLoc);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
+  
+  gl.uniform1f(unis.t, time);
+  gl.uniform2f(unis.res, 1000, 1000);
+  gl.uniform1f(unis.h1, C.h1);
+  gl.uniform1f(unis.h2, C.h2);
+  gl.uniform1f(unis.h3, C.h3);
+  gl.uniform1f(unis.bandCount, FX.bandCount);
+  gl.uniform1f(unis.bandHeight, FX.bandHeight);
+  gl.uniform1f(unis.vertSmear, FX.vertSmear);
+  gl.uniform1f(unis.rgbSplit, FX.rgbSplit);
+  gl.uniform1f(unis.waveWarp, FX.waveWarp);
+  gl.uniform1f(unis.clusters, FX.clusters);
+  gl.uniform1f(unis.scatter, FX.scatter);
+  gl.uniform1f(unis.pixelSize, FX.pixelSize);
+  gl.uniform1f(unis.colorIntensity, C.colorIntensity);
+  gl.uniform1f(unis.brightness, C.brightness);
+  gl.uniform1fv(unis.primSeeds, new Float32Array(C.primSeeds));
+  gl.uniform1fv(unis.bandSeeds, new Float32Array(C.bandSeeds));
+  gl.uniform1fv(unis.streakSeeds, new Float32Array(C.streakSeeds));
+  
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  requestAnimationFrame(render);
+}
+render(0);
+
+document.getElementById('randomize').onclick = () => { 
+  gen(Math.floor(Math.random() * 100000)); 
+  history.replaceState({}, '', '?seed=' + seed); 
+};
+document.onkeydown = e => { if(e.code === 'Space') { e.preventDefault(); document.getElementById('randomize').click(); }};
+</script>
+</body>
+</html>

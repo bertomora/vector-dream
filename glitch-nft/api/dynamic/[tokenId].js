@@ -22,7 +22,8 @@ const ARWEAVE_IMAGES = {
   "9": "https://gateway.irys.xyz/Os-0pAzhjFXA9c7ciCcTnqe8SgtvPKHazIjSjCZm_Lo",
   "10": "https://gateway.irys.xyz/yzLHP6JoiJeal18XrEWVU85_sgbI81mi62FCfvHD3hM",
   "11": "https://gateway.irys.xyz/N8y8irlW2xG6kGVdYWbgo932zBnfOC-juC0slKrjOng",
-  "12": "https://gateway.irys.xyz/5Ul7T7LLCkMKAn2ktAG_J7USv44OJ1x3ZX187Pera4g"
+  "12": "https://gateway.irys.xyz/5Ul7T7LLCkMKAn2ktAG_J7USv44OJ1x3ZX187Pera4g",
+  "13": "https://gateway.irys.xyz/_p3XtMVaQUYRp1YlmNL4mRsDqxVbNMCMtP-ga1LB6tI"
 };
 
 // On-chain seeds (updated by process-new-mints.js)
@@ -38,7 +39,8 @@ const TOKEN_SEEDS = {
   "9": 96384,
   "10": 91251,
   "11": 36429,
-  "12": 94403
+  "12": 94403,
+  "13": 43089
 };
 
 // Mulberry32 PRNG - deterministic from seed
