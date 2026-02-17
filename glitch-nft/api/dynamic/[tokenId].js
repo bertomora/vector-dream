@@ -9,15 +9,15 @@ const ARWEAVE_ANIMATION = 'https://gateway.irys.xyz/J4bJx08zZmM1QEIPMbi9xfO3ICek
 const getAnimationUrl = (tokenId) => ARWEAVE_ANIMATION;
 const FALLBACK_IMAGE_BASE = 'https://vector-dream.vercel.app/api/svg';
 
-// Arweave image URLs - re-captured without black borders
+// Arweave image URLs - all using gateway.irys.xyz
 const ARWEAVE_IMAGES = {
   "1": "https://gateway.irys.xyz/LuxDlQ63ILK-Txibc0ZkyDcx2nbQCLMHZYgqvv2xKLo",
   "2": "https://gateway.irys.xyz/JYCTXl6S7v8AVZsB3c_DVm7xfnHsNOXpE2SIptfe2X4",
-  "3": "https://arweave.net/lnMWGqQUvcVNUUpZ1PLTtxDW7DCeFSe4SAB_fe1SzHE",
-  "4": "https://arweave.net/j2lOe68natrU72O-Y8gbQPwIzopaxtNPCkZLCnnLsQQ",
-  "5": "https://arweave.net/uFpAR2_P6Q2gH9lVKOzxmR7bnlCGkshzxDbLll7i5YQ",
-  "6": "https://arweave.net/9AFYuxs1vwGTamA3Kj67cTc9iANH_w6or1R1keT37t8",
-  "7": "https://arweave.net/6mibupU3xV7yCrn-4FMqCQqqXK56TT4CPDOcPSj5M0g",
+  "3": "https://gateway.irys.xyz/lnMWGqQUvcVNUUpZ1PLTtxDW7DCeFSe4SAB_fe1SzHE",
+  "4": "https://gateway.irys.xyz/j2lOe68natrU72O-Y8gbQPwIzopaxtNPCkZLCnnLsQQ",
+  "5": "https://gateway.irys.xyz/uFpAR2_P6Q2gH9lVKOzxmR7bnlCGkshzxDbLll7i5YQ",
+  "6": "https://gateway.irys.xyz/9AFYuxs1vwGTamA3Kj67cTc9iANH_w6or1R1keT37t8",
+  "7": "https://gateway.irys.xyz/6mibupU3xV7yCrn-4FMqCQqqXK56TT4CPDOcPSj5M0g",
   "8": "https://gateway.irys.xyz/M-atXpYeEINf_RmAGNW23AReMPuGSLXK2s1fyRRBLOg",
   "9": "https://gateway.irys.xyz/ZB-buBxyUcQxa7vp9gBKHCHKHgdSPXjELb_nV9qbWTc",
   "10": "https://gateway.irys.xyz/FUpoNLfeMr_putE4f5LZzUwtKG1w3Dky7E_Wdjko1yU",
