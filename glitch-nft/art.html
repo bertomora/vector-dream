@@ -1203,6 +1203,16 @@ if (!isMinted) {
   document.getElementById('save').onclick = () => { const a = document.createElement('a'); a.download = 'vector-dream-' + seed + '.png'; a.href = canvas.toDataURL('image/png'); a.click(); };
   document.onkeydown = e => { if(e.code === 'Space') { e.preventDefault(); document.getElementById('randomize').click(); }};
 }
+
+// Listen for hash changes (when parent iframe changes src hash)
+window.addEventListener('hashchange', () => {
+  const newHashParams = new URLSearchParams(window.location.hash.slice(1));
+  const newSeed = newHashParams.get('seed');
+  if (newSeed) {
+    gen(parseInt(newSeed));
+    document.getElementById('seed-num').textContent = seed;
+  }
+});
 </script>
 </body>
 </html>

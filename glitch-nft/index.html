@@ -13,7 +13,8 @@
         html, body {
             font-family: 'Space Grotesk', sans-serif;
             background: #0c0c0f;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
             color: #fff;
         }
         
@@ -33,8 +34,8 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px 40px;
-            min-height: 100vh;
+            padding: 10px 40px 15px;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -96,17 +97,16 @@
         .content {
             flex: 1;
             display: flex;
-            gap: 40px;
+            gap: 30px;
             align-items: center;
             justify-content: center;
-            flex-wrap: wrap;
-            padding: 20px 0;
+            min-height: 0;
         }
         
         /* Art section */
         .art-section {
-            width: 550px;
-            max-width: 100%;
+            height: calc(100vh - 180px);
+            max-height: 550px;
             aspect-ratio: 1;
             flex-shrink: 0;
         }
@@ -189,16 +189,18 @@
         
         /* Mint panel */
         .mint-panel {
-            width: 550px;
-            max-width: 100%;
+            height: calc(100vh - 180px);
+            max-height: 550px;
+            aspect-ratio: 1;
             flex-shrink: 0;
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            justify-content: space-between;
+            overflow: hidden;
         }
         
         .collection-name {
@@ -426,32 +428,36 @@
         /* Large screens */
         @media (min-width: 1200px) {
             .logo { font-size: 3.85rem; letter-spacing: -1px; }
-            .art-section { width: 550px; }
-            .mint-panel { width: 500px; }
-        }
-
-        /* Medium screens - side by side but smaller */
-        @media (max-width: 1199px) and (min-width: 900px) {
-            .art-section { width: 450px; }
-            .mint-panel { width: 420px; }
-            .content { gap: 30px; }
         }
         
-        /* Tablet - stack vertically */
-        @media (max-width: 899px) {
+        /* Tablet and smaller - stack vertically */
+        @media (max-width: 1100px) {
+            html, body { height: auto; overflow: auto; }
+            .container { height: auto; min-height: 100vh; }
             .content {
                 flex-direction: column;
-                gap: 30px;
+                padding: 20px 0;
             }
-            .art-section { width: 100%; max-width: 500px; }
-            .mint-panel { width: 100%; max-width: 500px; }
+            .art-section { 
+                height: auto;
+                width: 90vw;
+                max-width: 450px;
+                max-height: none;
+            }
+            .mint-panel { 
+                height: auto;
+                width: 90vw;
+                max-width: 450px;
+                max-height: none;
+                aspect-ratio: auto;
+            }
             .logo { font-size: 2.5rem; }
         }
         
         /* Mobile */
         @media (max-width: 600px) {
             .container { padding: 15px; }
-            .topbar { margin-bottom: 15px; }
+            .topbar { margin-bottom: 10px; }
             .logo { font-size: 1.8rem; letter-spacing: 0; }
             .links { gap: 15px; }
             .links a { font-size: 0.8rem; }
@@ -461,12 +467,6 @@
             .mint-panel { padding: 20px; }
             .btn-gen { padding: 14px 30px; font-size: 0.9rem; letter-spacing: 2px; }
             .btn-nav { padding: 14px 18px; }
-        }
-        
-        /* Very small screens */
-        @media (max-width: 400px) {
-            .logo { font-size: 1.4rem; }
-            .btn-gen { padding: 12px 20px; font-size: 0.85rem; }
         }
     </style>
 </head>
