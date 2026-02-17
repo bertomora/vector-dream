@@ -207,13 +207,55 @@
         
         .tag {
             background: rgba(255,255,255,0.05);
-            padding: 8px 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 18px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .tag.highlight { background: rgba(139, 92, 246, 0.2); color: #a855f7; }
+        .tag.highlight { background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.3); color: #a855f7; }
+        .tag.base { background: rgba(0, 82, 255, 0.1); border-color: rgba(0, 82, 255, 0.3); }
+        
+        .create-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .create-title {
+            color: #ff6ec4;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            letter-spacing: 1px;
+        }
+        
+        .instructions {
+            color: #888;
+            font-size: 0.9rem;
+            line-height: 1.9;
+            margin-bottom: 15px;
+        }
+        
+        .instructions strong { color: #fff; }
+        .instructions .arrow { color: #4ff0ff; margin-right: 5px; }
+        
+        .random-hint {
+            color: #7873f5;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .random-hint strong { color: #a855f7; }
+        
+        .styles-info {
+            color: #555;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
         
         .divider {
             height: 1px;
@@ -379,14 +421,20 @@
             </div>
             
             <div class="mint-panel">
-                <div class="collection-name">Generative Art on Base</div>
-                <h1 class="title">Mint Your Dream</h1>
-                <p class="subtitle">100 unique vaporwave transmissions, fully on-chain</p>
-                
                 <div class="tags">
-                    <span class="tag highlight">Limited: 100</span>
-                    <span class="tag">Animated</span>
-                    <span class="tag">On-Chain</span>
+                    <span class="tag base"><svg width="12" height="12" viewBox="0 0 111 111" fill="none"><circle cx="55.5" cy="55.5" r="55.5" fill="#0052FF"/><circle cx="55.5" cy="55.5" r="40" fill="#fff"/></svg> BASE</span>
+                    <span class="tag highlight">LIMITED: 100</span>
+                </div>
+                
+                <div class="create-section">
+                    <div class="create-title">〔 CREATE YOUR PIECE 〕</div>
+                    <div class="instructions">
+                        <div><span class="arrow">►</span> Hit <strong>GENERATE</strong> until you find your vibe</div>
+                        <div><span class="arrow">►</span> Each piece is alive and unique</div>
+                        <div><span class="arrow">►</span> <strong>MINT</strong> to own it forever</div>
+                    </div>
+                    <div class="random-hint">◇ Feeling lucky? Try <strong>RANDOM MINT</strong> ◇</div>
+                    <div class="styles-info">Six styles: Synthwave • Databend • Corrupt • Neon • Isometric • Void (5% rare) — VHS wobble, CRT scanlines, film grain.</div>
                 </div>
                 
                 <div class="divider"></div>
@@ -417,13 +465,11 @@
                 </div>
                 
                 <div id="mint-btns" style="display:none;">
-                    <button class="btn-mint btn-primary" id="btn-mint" onclick="mintSeed()" disabled>Mint This Piece</button>
-                    <button class="btn-mint btn-secondary" onclick="mintRandom()">Random Mint</button>
+                    <button class="btn-mint btn-primary" id="btn-mint" onclick="mintSeed()" disabled>▶ MINT THIS ONE</button>
+                    <button class="btn-mint btn-secondary" onclick="mintRandom()">◇ RANDOM MINT ◇</button>
                 </div>
                 
                 <div class="status" id="status"></div>
-                
-                <div class="footer-note">Each seed can only be minted once • Yours forever</div>
             </div>
         </div>
     </div>
