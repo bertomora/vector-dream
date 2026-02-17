@@ -9,7 +9,7 @@ const ARWEAVE_ANIMATION = 'https://gateway.irys.xyz/J4bJx08zZmM1QEIPMbi9xfO3ICek
 const getAnimationUrl = (tokenId) => ARWEAVE_ANIMATION;
 const FALLBACK_IMAGE_BASE = 'https://vector-dream.vercel.app/api/svg';
 
-// Arweave image URLs - all using gateway.irys.xyz
+// Arweave image URLs (updated by process-new-mints.js, commit to deploy)
 const ARWEAVE_IMAGES = {
   "1": "https://gateway.irys.xyz/EQkqd9CglCNSBk5D2dh_bYuyNsc2UHmVsQl6q0xSy2Q",
   "2": "https://gateway.irys.xyz/U-e5-tatSCDihThfOLrQXGtM9nZMgyfenAQNCmr4Xd8",
