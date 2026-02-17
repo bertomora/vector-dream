@@ -2,19 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VΞCTOR DRΞΛM</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
-    <link rel="shortcut icon" href="/favicon.svg?v=2">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
+        html, body { height: 100%; overflow: hidden; }
         
         body {
             font-family: 'Orbitron', monospace;
@@ -22,568 +17,247 @@
             color: #fff;
         }
         
-        /* Vaporwave Grid Background */
         .grid-bg {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            inset: 0;
             background: 
                 linear-gradient(transparent 0%, rgba(120, 115, 245, 0.03) 50%, transparent 100%),
-                linear-gradient(90deg, transparent 49.5%, rgba(255, 110, 196, 0.1) 49.5%, rgba(255, 110, 196, 0.1) 50.5%, transparent 50.5%),
-                linear-gradient(transparent 49.5%, rgba(79, 240, 255, 0.08) 49.5%, rgba(79, 240, 255, 0.08) 50.5%, transparent 50.5%);
-            background-size: 100% 100%, 60px 60px, 60px 60px;
-            animation: gridMove 20s linear infinite;
+                linear-gradient(90deg, transparent 49.5%, rgba(255, 110, 196, 0.08) 50%, transparent 50.5%),
+                linear-gradient(transparent 49.5%, rgba(79, 240, 255, 0.06) 50%, transparent 50.5%);
+            background-size: 100% 100%, 50px 50px, 50px 50px;
             pointer-events: none;
             z-index: 0;
         }
         
-        @keyframes gridMove {
-            0% { background-position: 0 0, 0 0, 0 0; }
-            100% { background-position: 0 100%, 0 60px, 60px 0; }
-        }
-        
-        /* Scanlines */
-        .scanlines {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.15) 2px,
-                rgba(0, 0, 0, 0.15) 4px
-            );
-            pointer-events: none;
-            z-index: 1000;
-        }
-        
-        /* Main Layout */
         .main {
-            display: flex;
-            flex-direction: column;
             height: 100vh;
             height: 100dvh;
+            display: flex;
+            flex-direction: column;
             position: relative;
             z-index: 1;
-            max-width: 500px;
+            max-width: 480px;
             margin: 0 auto;
-            padding: 10px;
+            padding: 8px;
         }
         
-        /* Preview Side */
-        .preview-side {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-        }
-        
-        .preview-wrap {
-            position: relative;
-            width: 100%;
-            max-width: 500px;
-            aspect-ratio: 1;
-        }
-        
-        .preview-frame {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 
-                0 0 60px rgba(255, 110, 196, 0.3),
-                0 0 120px rgba(120, 115, 245, 0.2),
-                inset 0 0 60px rgba(0, 0, 0, 0.5);
-        }
-        
-        .preview-glow {
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            border-radius: 10px;
-            background: linear-gradient(45deg, #ff6ec4, #7873f5, #4ff0ff, #ff6ec4);
-            background-size: 400% 400%;
-            animation: glowPulse 3s ease infinite;
-            z-index: -1;
-            opacity: 0.7;
-        }
-        
-        @keyframes glowPulse {
-            0%, 100% { background-position: 0% 50%; opacity: 0.5; }
-            50% { background-position: 100% 50%; opacity: 0.8; }
-        }
-        
-        .btn-generate {
-            margin-top: 20px;
-            background: linear-gradient(90deg, #ff6ec4, #7873f5);
-            border: none;
-            padding: 15px 50px;
-            font-family: 'Orbitron', monospace;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #fff;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            transition: all 0.3s;
-            clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-        }
-        
-        .btn-generate:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(255, 110, 196, 0.5);
-        }
-        
-        .nav-buttons {
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .nav-buttons .btn-generate {
-            margin-top: 0;
-        }
-        
-        .btn-nav {
-            background: rgba(120, 115, 245, 0.3);
-            border: 1px solid rgba(120, 115, 245, 0.5);
-            padding: 0 20px;
-            font-family: 'Orbitron', monospace;
-            font-size: 1rem;
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .btn-nav:hover:not(:disabled) {
-            background: rgba(120, 115, 245, 0.5);
-            box-shadow: 0 0 20px rgba(120, 115, 245, 0.4);
-        }
-        
-        .btn-nav:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-        
-        /* Mint Side */
-        .mint-side {
-            background: rgba(10, 5, 20, 0.9);
-            border-left: 1px solid rgba(120, 115, 245, 0.3);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* Logo */
         .logo {
             text-align: center;
-            margin-bottom: 25px;
+            padding: 6px 0;
+            flex-shrink: 0;
         }
         
         .logo h1 {
-            font-size: 1.8rem;
+            font-size: 1.3rem;
             font-weight: 900;
             background: linear-gradient(90deg, #ff6ec4, #7873f5, #4ff0ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 40px rgba(120, 115, 245, 0.5);
+            background-clip: text;
         }
         
-        .logo .sub {
-            font-size: 0.65rem;
-            color: #666;
-            letter-spacing: 4px;
-            margin-top: 5px;
-        }
-        
-        /* Badges */
-        .badges {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-        
-        .badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(120, 115, 245, 0.15);
-            border: 1px solid rgba(120, 115, 245, 0.3);
-            font-size: 0.7rem;
-            color: #aaa;
-        }
-        
-        .badge.pink {
-            background: rgba(255, 110, 196, 0.15);
-            border-color: rgba(255, 110, 196, 0.3);
-        }
-        
-        .description {
-            font-size: 0.65rem;
-            color: #777;
-            line-height: 1.6;
-            text-align: center;
-            margin-bottom: 15px;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            letter-spacing: 0.3px;
-        }
-        
-        /* Stats */
-        .stats {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.85rem;
-        }
-        
-        .stat-row:last-child { border: none; }
-        
-        .stat-label { color: #666; text-transform: uppercase; letter-spacing: 2px; font-size: 0.7rem; }
-        .stat-value { color: #4ff0ff; font-weight: 700; }
-        .stat-value.pink { color: #ff6ec4; }
-        
-        /* Wallet */
-        .wallet-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            font-family: 'Orbitron', monospace;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            transition: all 0.3s;
-        }
-        
-        .btn-connect {
-            background: linear-gradient(90deg, #0052FF, #4f8fff);
-            color: #fff;
-        }
-        
-        .btn-mint {
-            background: linear-gradient(90deg, #ff6ec4, #ff9a56);
-            color: #000;
-        }
-        
-        .btn-mint-random {
-            background: linear-gradient(90deg, #4ff0ff, #7873f5);
-            color: #000;
-        }
-        
-        .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 30px rgba(120, 115, 245, 0.4);
-        }
-        
-        .btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        
-        /* Status */
-        .status {
-            padding: 12px;
-            text-align: center;
-            font-size: 0.8rem;
-            margin-top: 10px;
-            display: none;
-        }
-        
-        .status.error { background: rgba(255, 70, 70, 0.2); color: #ff7070; display: block; }
-        .status.success { background: rgba(70, 255, 150, 0.2); color: #70ff96; display: block; }
-        .status.pending { background: rgba(255, 200, 70, 0.2); color: #ffc846; display: block; }
-        
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .footer a {
-            color: #7873f5;
-            text-decoration: none;
-            font-size: 0.65rem;
-            margin: 0 8px;
-        }
-        
-        /* Wallet Connected State */
-        .wallet-info {
-            display: none;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 12px;
-            margin-bottom: 15px;
-            font-size: 0.75rem;
-        }
-        
-        .wallet-info.show { display: flex; justify-content: space-between; }
-        .wallet-addr { color: #4ff0ff; }
-        .wallet-bal { color: #ff6ec4; }
-        
-        .mint-note {
-            text-align: center;
-            font-size: 0.65rem;
-            color: #444;
-            margin-top: 15px;
-        }
-        
-        .sold-out {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 900;
-            background: linear-gradient(90deg, #ff6ec4, #7873f5, #4ff0ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 15px;
-            animation: glowPulse 2s ease infinite;
-        }
-        
-        /* Single page layout - Mobile default */
-        .preview-side { 
-            padding: 8px; 
+        .preview-area {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 0;
-            overflow: hidden;
         }
         
-        .preview-wrap { 
-            width: min(80vw, calc(100vh - 380px));
-            max-width: 340px;
+        .preview-wrap {
+            position: relative;
+            width: min(85vw, calc(100vh - 340px));
+            max-width: 360px;
             aspect-ratio: 1;
         }
         
-        .btn-generate {
+        .preview-glow {
+            position: absolute;
+            inset: -2px;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #ff6ec4, #7873f5, #4ff0ff, #ff6ec4);
+            background-size: 400% 400%;
+            animation: pulse 3s ease infinite;
+            z-index: -1;
+            opacity: 0.6;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { background-position: 0% 50%; opacity: 0.4; }
+            50% { background-position: 100% 50%; opacity: 0.7; }
+        }
+        
+        .preview-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 6px;
+            display: block;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
             margin-top: 10px;
-            padding: 10px 30px;
-            font-size: 0.85rem;
-        }
-        
-        .mint-side { 
-            border-top: 1px solid rgba(120, 115, 245, 0.3);
-            padding: 10px 15px;
             flex-shrink: 0;
-            overflow: hidden;
         }
         
-        .logo { margin-bottom: 10px; }
-        .logo h1 { font-size: 1.4rem; }
-        .logo .sub { font-size: 0.55rem; margin-top: 3px; }
+        .btn-nav {
+            background: rgba(120, 115, 245, 0.3);
+            border: 1px solid rgba(120, 115, 245, 0.5);
+            padding: 10px 18px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            color: #fff;
+            cursor: pointer;
+        }
+        .btn-nav:disabled { opacity: 0.3; cursor: not-allowed; }
         
-        .badges { margin-bottom: 8px; }
-        .badge { padding: 4px 10px; font-size: 0.6rem; }
-        
-        .description { font-size: 0.55rem; margin-bottom: 10px; line-height: 1.5; }
-        
-        .stats { padding: 10px; margin-bottom: 10px; }
-        .stat-row { padding: 6px 0; font-size: 0.75rem; }
-        .stat-label { font-size: 0.6rem; }
-        
-        .btn { padding: 12px; font-size: 0.75rem; margin-bottom: 8px; }
-        
-        .wallet-section { flex: none; }
-        .wallet-info { padding: 8px; font-size: 0.65rem; margin-bottom: 10px; }
-        
-        .mint-note { font-size: 0.55rem; margin-top: 10px; }
-        .footer { padding-top: 8px; }
-        .footer a { font-size: 0.6rem; }
-        
-        /* Smaller screens - tighten more */
-        @media (max-height: 700px) {
-            .logo { margin-bottom: 6px; }
-            .logo h1 { font-size: 1.2rem; }
-            .badges { margin-bottom: 6px; }
-            .description { font-size: 0.5rem; margin-bottom: 6px; }
-            .stats { padding: 6px; margin-bottom: 6px; }
-            .stat-row { padding: 4px 0; }
-            .btn { padding: 10px; margin-bottom: 6px; }
-            .mint-note { margin-top: 6px; }
+        .btn-generate {
+            background: linear-gradient(90deg, #ff6ec4, #7873f5);
+            border: none;
+            padding: 10px 30px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
         
-        /* Desktop layout - side by side with bigger art */
+        .mint-panel {
+            flex-shrink: 0;
+            padding: 8px 0;
+        }
+        
+        .description {
+            font-size: 0.5rem;
+            color: #777;
+            text-align: center;
+            padding: 6px;
+            line-height: 1.4;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px;
+            margin: 6px 0;
+        }
+        
+        .stat { text-align: center; }
+        .stat-label { font-size: 0.5rem; color: #555; text-transform: uppercase; }
+        .stat-value { font-size: 0.7rem; color: #4ff0ff; font-weight: 700; margin-top: 2px; }
+        .stat-value.pink { color: #ff6ec4; }
+        
+        .buttons { display: flex; flex-direction: column; gap: 6px; }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-connect { background: linear-gradient(90deg, #0052FF, #4f8fff); color: #fff; }
+        .btn-mint { background: linear-gradient(90deg, #ff6ec4, #ff9a56); color: #000; }
+        .btn-mint-random { background: linear-gradient(90deg, #4ff0ff, #7873f5); color: #000; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        .wallet-info { display: none; justify-content: space-between; background: rgba(0,0,0,0.4); padding: 8px; font-size: 0.6rem; margin-bottom: 6px; }
+        .wallet-info.show { display: flex; }
+        .wallet-addr { color: #4ff0ff; }
+        .wallet-bal { color: #ff6ec4; }
+        
+        .status { padding: 8px; text-align: center; font-size: 0.65rem; display: none; margin-top: 6px; }
+        .status.error { background: rgba(255,70,70,0.2); color: #ff7070; display: block; }
+        .status.success { background: rgba(70,255,150,0.2); color: #70ff96; display: block; }
+        .status.pending { background: rgba(255,200,70,0.2); color: #ffc846; display: block; }
+        
+        .footer { text-align: center; padding: 6px 0; flex-shrink: 0; }
+        .footer a { color: #7873f5; text-decoration: none; font-size: 0.55rem; margin: 0 10px; }
+        
+        .sold-out { font-size: 1rem; font-weight: 900; background: linear-gradient(90deg, #ff6ec4, #7873f5, #4ff0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 8px; }
+        
         @media (min-width: 900px) {
-            .main {
-                flex-direction: row;
-                max-width: 1400px;
-                padding: 20px 40px;
-                gap: 40px;
-            }
-            
-            .preview-side {
-                flex: 1;
-                padding: 20px;
-                justify-content: center;
-            }
-            
-            .preview-wrap {
-                width: min(100%, 70vh);
-                height: auto;
-                max-width: 600px;
-                max-height: none;
-                aspect-ratio: 1;
-            }
-            
-            .btn-generate {
-                margin-top: 25px;
-                padding: 15px 50px;
-                font-size: 1rem;
-            }
-            
-            .mint-side {
-                width: 360px;
-                flex-shrink: 0;
-                border-top: none;
-                border-left: 1px solid rgba(120, 115, 245, 0.3);
-                padding: 30px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
-            
-            .logo { margin-bottom: 25px; }
-            .logo h1 { font-size: 1.8rem; }
-            .logo .sub { font-size: 0.65rem; margin-top: 5px; }
-            
-            .badges { margin-bottom: 15px; }
-            .badge { padding: 6px 12px; font-size: 0.7rem; }
-            
-            .description { font-size: 0.7rem; margin-bottom: 20px; }
-            
-            .stats { padding: 15px; margin-bottom: 20px; }
-            .stat-row { padding: 10px 0; font-size: 0.85rem; }
-            .stat-label { font-size: 0.7rem; }
-            
-            .btn { padding: 16px; font-size: 0.85rem; margin-bottom: 10px; }
-            
-            .wallet-info { padding: 12px; font-size: 0.75rem; margin-bottom: 15px; }
-            
-            .mint-note { font-size: 0.65rem; margin-top: 15px; }
-            .footer { padding-top: 15px; }
-            .footer a { font-size: 0.65rem; margin: 0 8px; }
+            .main { flex-direction: row; max-width: 1100px; padding: 30px 40px; gap: 40px; align-items: center; }
+            .preview-area { flex: 1; }
+            .preview-wrap { width: min(45vw, calc(100vh - 100px)); max-width: 520px; }
+            .btn-generate { padding: 14px 50px; font-size: 0.9rem; }
+            .btn-nav { padding: 14px 24px; }
+            .mint-panel { width: 340px; flex-shrink: 0; }
+            .logo h1 { font-size: 1.6rem; }
+            .description { font-size: 0.6rem; text-align: left; }
+            .stats-row { padding: 12px; }
+            .stat-value { font-size: 0.8rem; }
+            .btn { padding: 14px; font-size: 0.75rem; }
         }
         
-        /* Large desktop - even bigger art */
-        @media (min-width: 1200px) {
-            .main {
-                padding: 30px 60px;
-                gap: 60px;
-            }
-            
-            .preview-wrap {
-                max-width: min(100%, 75vh);
-            }
-            
-            .mint-side {
-                width: 400px;
-                padding: 40px;
-            }
-            
-            .logo h1 { font-size: 2rem; }
+        @media (max-height: 650px) {
+            .logo h1 { font-size: 1rem; }
+            .preview-wrap { width: min(80vw, calc(100vh - 280px)); }
+            .description { display: none; }
+            .stats-row { padding: 6px; }
+            .btn { padding: 10px; }
         }
     </style>
 </head>
 <body>
     <div class="grid-bg"></div>
-    <div class="scanlines"></div>
     
     <div class="main">
-        <div class="preview-side">
+        <div class="preview-area">
             <div class="preview-wrap">
                 <div class="preview-glow"></div>
                 <iframe class="preview-frame" id="preview" src="art.html"></iframe>
             </div>
             <div class="nav-buttons">
-                <button class="btn-nav" onclick="goBack()" id="btn-back" disabled>◀</button>
-                <button class="btn-generate" onclick="generate()">GENERATE</button>
-                <button class="btn-nav" onclick="goForward()" id="btn-forward" disabled>▶</button>
+                <button class="btn-nav" id="btn-back" disabled>◀</button>
+                <button class="btn-generate" id="btn-gen">GENERATE</button>
+                <button class="btn-nav" id="btn-forward" disabled>▶</button>
             </div>
         </div>
         
-        <div class="mint-side">
-            <div class="logo">
-                <h1>VΞCTOR DRΞΛM</h1>
-                <div class="sub">GENERATIVE ART ON BASE</div>
-            </div>
-            
-            <div class="badges">
-                <div class="badge">
-                    <svg width="12" height="12" viewBox="0 0 111 111" fill="none">
-                        <circle cx="55.5" cy="55.5" r="55.5" fill="#0052FF"/>
-                        <circle cx="55.5" cy="55.5" r="40" fill="#fff"/>
-                    </svg>
-                    BASE
-                </div>
-                <div class="badge pink">LIMITED: 100</div>
-            </div>
+        <div class="mint-panel">
+            <div class="logo"><h1>VΞCTOR DRΞΛM</h1></div>
             
             <p class="description">
-                <strong style="color:#ff6ec4">〔 CREATE YOUR PIECE 〕</strong><br><br>
-                <span style="color:#4ff0ff">►</span> Hit <strong>GENERATE</strong> until you find your vibe<br>
-                <span style="color:#4ff0ff">►</span> Each piece is alive and unique<br>
-                <span style="color:#4ff0ff">►</span> <strong>MINT</strong> to own it forever<br><br>
-                <span style="color:#7873f5">◇ Feeling lucky? Try <strong>RANDOM MINT</strong> ◇</span><br><br>
-                <span style="color:#555">Six styles: Synthwave • Databend • Corrupt • Neon • Isometric • Void (5% rare) — VHS wobble, CRT scanlines, film grain.</span>
+                100 on-chain generative vaporwave pieces on Base. Six styles: 
+                <span style="color:#ff6ec4">Synthwave</span> · 
+                <span style="color:#4ff0ff">Databend</span> · 
+                <span style="color:#7873f5">Corrupt</span> · 
+                <span style="color:#00ff87">Neon</span> · 
+                <span style="color:#60efff">Isometric</span> · 
+                <span style="color:#fff">Void</span>. 
+                Animated, unique, permanent.
             </p>
             
-            <div class="stats">
-                <div class="stat-row">
-                    <span class="stat-label">Price</span>
-                    <span class="stat-value" id="price">0.004 ETH</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Minted</span>
-                    <span class="stat-value"><span id="minted">0</span> / 100</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Seed</span>
-                    <span class="stat-value pink" id="seed">-</span>
-                </div>
+            <div class="stats-row">
+                <div class="stat"><div class="stat-label">Price</div><div class="stat-value" id="price">0.004 ETH</div></div>
+                <div class="stat"><div class="stat-label">Minted</div><div class="stat-value"><span id="minted">0</span>/100</div></div>
+                <div class="stat"><div class="stat-label">Seed</div><div class="stat-value pink" id="seed">-</div></div>
             </div>
             
-            <div class="wallet-section">
+            <div class="buttons">
                 <div class="wallet-info" id="wallet-info">
                     <span class="wallet-addr" id="wallet-addr">0x...</span>
                     <span class="wallet-bal" id="wallet-bal">0.00 ETH</span>
                 </div>
-                
-                <div id="connect-btns">
-                    <button class="btn btn-connect" onclick="connect()">Connect Wallet</button>
-                </div>
-                
+                <div id="connect-btns"><button class="btn btn-connect" id="btn-connect">Connect Wallet</button></div>
                 <div id="mint-btns" style="display:none;">
-                    <button class="btn btn-mint" id="btn-mint" onclick="mintSeed()" disabled>▶ MINT THIS ONE</button>
-                    <button class="btn btn-mint-random" onclick="mintRandom()">⟐ RANDOM MINT ⟐</button>
+                    <button class="btn btn-mint" id="btn-mint" disabled>MINT THIS ONE</button>
+                    <button class="btn btn-mint-random" id="btn-random">RANDOM MINT</button>
                 </div>
-                
                 <div class="status" id="status"></div>
-                
-                <div class="mint-note">◈ 100 TOTAL ◈ UNIQUE FOREVER ◈ ON-CHAIN ◈</div>
             </div>
             
             <div class="footer">
@@ -595,262 +269,145 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
     <script>
-        const CONFIG = {
-            contract: '0xbaE88927F84adc3a16aa3A41340631f5F285FA0A',
-            chainId: 8453,
-            rpc: 'https://mainnet.base.org'
-        };
+        var CONFIG = { contract: '0xbaE88927F84adc3a16aa3A41340631f5F285FA0A', chainId: 8453, rpc: 'https://mainnet.base.org' };
+        var ABI = ["function mint(uint256 seed) external payable","function mintRandom() external payable","function mintPrice() external view returns (uint256)","function totalSupply() external view returns (uint256)","function isSeedAvailable(uint256 seed) external view returns (bool)"];
         
-        const ABI = [
-            "function mint(uint256 seed) external payable",
-            "function mintRandom() external payable",
-            "function mintPrice() external view returns (uint256)",
-            "function totalSupply() external view returns (uint256)",
-            "function isSeedAvailable(uint256 seed) external view returns (bool)"
-        ];
+        var provider, signer, contract, currentSeed, mintPrice;
+        var seedHistory = [];
+        var historyIndex = -1;
         
-        let provider, signer, contract, currentSeed, mintPrice;
-        const MAX_SUPPLY = 100;
-        
-        // History tracking
-        let seedHistory = [];
-        let historyIndex = -1;
-        
-        // Fetch supply on page load (read-only)
-        async function fetchSupply() {
-            try {
-                const readProvider = new ethers.JsonRpcProvider(CONFIG.rpc);
-                const readContract = new ethers.Contract(CONFIG.contract, ABI, readProvider);
-                const supply = await readContract.totalSupply();
-                updateSupplyDisplay(Number(supply));
-            } catch (e) {
-                console.error('Failed to fetch supply:', e);
-            }
+        function fetchSupply() {
+            var readProvider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            var readContract = new ethers.Contract(CONFIG.contract, ABI, readProvider);
+            readContract.totalSupply().then(function(supply) {
+                document.getElementById('minted').textContent = Number(supply);
+                if (Number(supply) >= 100) {
+                    document.getElementById('connect-btns').innerHTML = '<div class="sold-out">SOLD OUT</div><a href="https://opensea.io/collection/vector-dreamz" target="_blank" class="btn btn-connect" style="text-align:center;text-decoration:none;">View on OpenSea</a>';
+                }
+            }).catch(function(e) { console.error(e); });
         }
-        
-        function updateSupplyDisplay(supply) {
-            document.getElementById('minted').textContent = supply.toString();
-            
-            if (supply >= MAX_SUPPLY) {
-                // SOLD OUT state
-                document.getElementById('connect-btns').innerHTML = `
-                    <div class="sold-out">🎉 SOLD OUT 🎉</div>
-                    <a href="https://opensea.io/collection/vector-dreamz" target="_blank" class="btn btn-connect" style="text-align:center;text-decoration:none;">View on OpenSea</a>
-                `;
-                document.getElementById('mint-btns').style.display = 'none';
-                document.querySelector('.mint-note').textContent = 'All 100 pieces have been minted!';
-            }
-        }
-        
-        // Load supply on page load
-        fetchSupply();
         
         function generate() {
-            // Generate seed that's visually different from last one
-            // Seeds close together often look similar, so ensure at least 5000 apart
-            let newSeed;
-            let attempts = 0;
-            do {
+            var newSeed = Math.floor(Math.random() * 99999) + 1;
+            var attempts = 0;
+            while (currentSeed && Math.abs(newSeed - currentSeed) < 5000 && attempts < 10) {
                 newSeed = Math.floor(Math.random() * 99999) + 1;
                 attempts++;
-            } while (currentSeed && Math.abs(newSeed - currentSeed) < 5000 && attempts < 10);
-            
-            // Also avoid seeds in same "style bucket" (every ~16666 seeds = same style)
-            // by adding extra randomization
-            if (currentSeed && Math.floor(newSeed / 16666) === Math.floor(currentSeed / 16666)) {
-                newSeed = (newSeed + 16666 + Math.floor(Math.random() * 50000)) % 99999 + 1;
             }
-            
             currentSeed = newSeed;
-            
-            // Add to history (remove any forward history)
-            if (historyIndex < seedHistory.length - 1) {
-                seedHistory = seedHistory.slice(0, historyIndex + 1);
-            }
+            if (historyIndex < seedHistory.length - 1) { seedHistory = seedHistory.slice(0, historyIndex + 1); }
             seedHistory.push(currentSeed);
             historyIndex = seedHistory.length - 1;
-            
             showSeed(currentSeed);
-            updateNavButtons();
+            updateNav();
         }
         
         function showSeed(seed) {
             currentSeed = seed;
-            document.getElementById('preview').src = `art.html#seed=${seed}`;
+            document.getElementById('preview').src = 'art.html#seed=' + seed;
             document.getElementById('seed').textContent = seed;
-            if (contract) checkSeed();
+            if (contract) { checkSeed(); }
         }
         
-        function goBack() {
-            if (historyIndex > 0) {
-                historyIndex--;
-                showSeed(seedHistory[historyIndex]);
-                updateNavButtons();
-            }
-        }
-        
-        function goForward() {
-            if (historyIndex < seedHistory.length - 1) {
-                historyIndex++;
-                showSeed(seedHistory[historyIndex]);
-                updateNavButtons();
-            }
-        }
-        
-        function updateNavButtons() {
+        function goBack() { if (historyIndex > 0) { historyIndex--; showSeed(seedHistory[historyIndex]); updateNav(); } }
+        function goForward() { if (historyIndex < seedHistory.length - 1) { historyIndex++; showSeed(seedHistory[historyIndex]); updateNav(); } }
+        function updateNav() {
             document.getElementById('btn-back').disabled = historyIndex <= 0;
             document.getElementById('btn-forward').disabled = historyIndex >= seedHistory.length - 1;
         }
         
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
+        function isMobile() { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
         
-        function openInWallet(wallet) {
-            const url = encodeURIComponent(window.location.href);
-            const host = window.location.host;
-            if (wallet === 'metamask') {
-                window.location.href = `https://metamask.app.link/dapp/${host}${window.location.pathname}`;
-            } else if (wallet === 'coinbase') {
-                window.location.href = `https://go.cb-w.com/dapp?cb_url=${url}`;
-            } else if (wallet === 'rainbow') {
-                window.location.href = `https://rainbow.me/dapp?url=${url}`;
-            }
-        }
-        
-        function showWalletOptions() {
-            document.getElementById('connect-btns').innerHTML = `
-                <p style="text-align:center;font-size:0.7rem;color:#888;margin-bottom:12px;">Open in your wallet app:</p>
-                <button class="btn btn-connect" onclick="openInWallet('metamask')" style="background:linear-gradient(90deg,#f6851b,#e2761b);">
-                    🦊 MetaMask
-                </button>
-                <button class="btn btn-connect" onclick="openInWallet('coinbase')">
-                    Coinbase Wallet
-                </button>
-                <button class="btn btn-connect" onclick="openInWallet('rainbow')" style="background:linear-gradient(90deg,#001e59,#174299);">
-                    🌈 Rainbow
-                </button>
-            `;
-        }
-        
-        async function connect() {
+        function connect() {
             if (!window.ethereum) {
                 if (isMobile()) {
-                    showWalletOptions();
+                    document.getElementById('connect-btns').innerHTML = '<p style="text-align:center;font-size:0.55rem;color:#888;margin-bottom:6px;">Open in wallet:</p><button class="btn btn-connect" style="background:linear-gradient(90deg,#f6851b,#e2761b);margin-bottom:4px;" onclick="location.href=\'https://metamask.app.link/dapp/\'+location.host">MetaMask</button><button class="btn btn-connect" onclick="location.href=\'https://go.cb-w.com/dapp?cb_url=\'+encodeURIComponent(location.href)">Coinbase</button>';
                     return;
                 }
-                return showStatus('Install MetaMask or Coinbase Wallet', 'error');
+                showStatus('Install MetaMask or Coinbase Wallet', 'error');
+                return;
             }
-            
-            try {
-                showStatus('Connecting...', 'pending');
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+            showStatus('Connecting...', 'pending');
+            window.ethereum.request({ method: 'eth_requestAccounts' }).then(function() {
+                return window.ethereum.request({ method: 'eth_chainId' });
+            }).then(function(chainId) {
                 if (parseInt(chainId, 16) !== CONFIG.chainId) {
-                    await window.ethereum.request({
-                        method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: '0x' + CONFIG.chainId.toString(16) }]
-                    }).catch(async () => {
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{ chainId: '0x2105', chainName: 'Base', nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, rpcUrls: ['https://mainnet.base.org'], blockExplorerUrls: ['https://basescan.org'] }]
-                        });
-                    });
+                    return window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
                 }
-                
+            }).then(function() {
                 provider = new ethers.BrowserProvider(window.ethereum);
-                signer = await provider.getSigner();
+                return provider.getSigner();
+            }).then(function(s) {
+                signer = s;
                 contract = new ethers.Contract(CONFIG.contract, ABI, signer);
-                
-                const addr = await signer.getAddress();
-                const bal = await provider.getBalance(addr);
-                mintPrice = await contract.mintPrice();
-                const supply = await contract.totalSupply();
-                
-                document.getElementById('wallet-addr').textContent = addr.slice(0,6) + '...' + addr.slice(-4);
-                document.getElementById('wallet-bal').textContent = parseFloat(ethers.formatEther(bal)).toFixed(4) + ' ETH';
+                return Promise.all([signer.getAddress(), provider.getBalance(signer.address), contract.mintPrice(), contract.totalSupply()]);
+            }).then(function(results) {
+                document.getElementById('wallet-addr').textContent = results[0].slice(0,6) + '...' + results[0].slice(-4);
+                document.getElementById('wallet-bal').textContent = parseFloat(ethers.formatEther(results[1])).toFixed(4) + ' ETH';
                 document.getElementById('wallet-info').classList.add('show');
+                mintPrice = results[2];
                 document.getElementById('price').textContent = ethers.formatEther(mintPrice) + ' ETH';
-                document.getElementById('minted').textContent = supply.toString();
-                
+                document.getElementById('minted').textContent = Number(results[3]);
                 document.getElementById('connect-btns').style.display = 'none';
                 document.getElementById('mint-btns').style.display = 'block';
-                
                 hideStatus();
                 checkSeed();
-            } catch (e) {
-                showStatus(e.message || 'Connection failed', 'error');
-            }
+            }).catch(function(e) { showStatus(e.message || 'Failed', 'error'); });
         }
         
-        async function checkSeed() {
+        function checkSeed() {
             if (!contract || !currentSeed) return;
-            const available = await contract.isSeedAvailable(currentSeed);
-            document.getElementById('btn-mint').disabled = !available;
-            document.getElementById('btn-mint').textContent = available ? '▶ MINT THIS ONE' : '✕ TAKEN — GENERATE AGAIN';
+            contract.isSeedAvailable(currentSeed).then(function(available) {
+                document.getElementById('btn-mint').disabled = !available;
+                document.getElementById('btn-mint').textContent = available ? 'MINT THIS ONE' : 'TAKEN - GENERATE';
+            });
         }
         
-        async function mintSeed() {
-            try {
-                showStatus('Confirm in wallet...', 'pending');
-                const tx = await contract.mint(currentSeed, { value: mintPrice });
+        function mintSeed() {
+            showStatus('Confirm in wallet...', 'pending');
+            contract.mint(currentSeed, { value: mintPrice }).then(function(tx) {
                 showStatus('Minting...', 'pending');
-                await tx.wait();
-                const newSupply = await contract.totalSupply();
-                updateSupplyDisplay(Number(newSupply));
-                showStatus('Uploading art to Arweave...', 'pending');
-                await uploadToArweave(newSupply);
-                showStatus('🎉 Minted & uploaded!', 'success');
+                return tx.wait();
+            }).then(function() {
+                return contract.totalSupply();
+            }).then(function(supply) {
+                document.getElementById('minted').textContent = Number(supply);
+                showStatus('Minted!', 'success');
                 checkSeed();
-            } catch (e) {
-                showStatus(e.reason || e.message || 'Failed', 'error');
-            }
+            }).catch(function(e) { showStatus(e.reason || e.message || 'Failed', 'error'); });
         }
         
-        async function mintRandom() {
-            try {
-                showStatus('Confirm in wallet...', 'pending');
-                const tx = await contract.mintRandom({ value: mintPrice });
+        function mintRandom() {
+            showStatus('Confirm in wallet...', 'pending');
+            contract.mintRandom({ value: mintPrice }).then(function(tx) {
                 showStatus('Minting...', 'pending');
-                await tx.wait();
-                const newSupply = await contract.totalSupply();
-                updateSupplyDisplay(Number(newSupply));
-                showStatus('Uploading art to Arweave...', 'pending');
-                await uploadToArweave(newSupply);
-                showStatus('🎉 Minted & uploaded!', 'success');
-            } catch (e) {
-                showStatus(e.reason || e.message || 'Failed', 'error');
-            }
+                return tx.wait();
+            }).then(function() {
+                return contract.totalSupply();
+            }).then(function(supply) {
+                document.getElementById('minted').textContent = Number(supply);
+                showStatus('Minted!', 'success');
+            }).catch(function(e) { showStatus(e.reason || e.message || 'Failed', 'error'); });
         }
         
-        async function uploadToArweave(tokenId) {
-            try {
-                const resp = await fetch('/api/upload-arweave', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tokenId: tokenId.toString() })
-                });
-                const data = await resp.json();
-                console.log('Arweave upload:', data);
-            } catch (e) {
-                console.error('Arweave upload failed:', e);
-            }
-        }
-        
-        function showStatus(msg, type) {
-            const el = document.getElementById('status');
-            el.textContent = msg;
-            el.className = 'status ' + type;
-        }
-        
+        function showStatus(msg, type) { var el = document.getElementById('status'); el.textContent = msg; el.className = 'status ' + type; }
         function hideStatus() { document.getElementById('status').className = 'status'; }
         
+        // Event listeners
+        document.getElementById('btn-gen').addEventListener('click', generate);
+        document.getElementById('btn-back').addEventListener('click', goBack);
+        document.getElementById('btn-forward').addEventListener('click', goForward);
+        document.getElementById('btn-connect').addEventListener('click', connect);
+        document.getElementById('btn-mint').addEventListener('click', mintSeed);
+        document.getElementById('btn-random').addEventListener('click', mintRandom);
+        
+        // Init
+        fetchSupply();
         generate();
         
         if (window.ethereum) {
-            window.ethereum.on('accountsChanged', () => location.reload());
-            window.ethereum.on('chainChanged', () => location.reload());
+            window.ethereum.on('accountsChanged', function() { location.reload(); });
+            window.ethereum.on('chainChanged', function() { location.reload(); });
         }
     </script>
 </body>
