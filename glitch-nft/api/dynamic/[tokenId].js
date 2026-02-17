@@ -21,7 +21,8 @@ const ARWEAVE_IMAGES = {
   "8": "https://gateway.irys.xyz/B7E4BPLg1WApwIfQKmk14dbetT5m5whcMs3f2k_c_zI",
   "9": "https://gateway.irys.xyz/Os-0pAzhjFXA9c7ciCcTnqe8SgtvPKHazIjSjCZm_Lo",
   "10": "https://gateway.irys.xyz/yzLHP6JoiJeal18XrEWVU85_sgbI81mi62FCfvHD3hM",
-  "11": "https://gateway.irys.xyz/N8y8irlW2xG6kGVdYWbgo932zBnfOC-juC0slKrjOng"
+  "11": "https://gateway.irys.xyz/N8y8irlW2xG6kGVdYWbgo932zBnfOC-juC0slKrjOng",
+  "12": "https://gateway.irys.xyz/5Ul7T7LLCkMKAn2ktAG_J7USv44OJ1x3ZX187Pera4g"
 };
 
 // Mulberry32 PRNG - deterministic from seed

@@ -196,7 +196,7 @@
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 20px;
-            padding: 25px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -255,37 +255,37 @@
         
         .create-section {
             text-align: center;
-            margin: 8px 0;
+            margin: 4px 0;
         }
         
         .create-title {
             color: #ff6ec4;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            margin-top: -8px;
-            margin-bottom: 14px;
+            margin-top: 0;
+            margin-bottom: 8px;
             letter-spacing: 2px;
         }
         
         .instructions {
             color: #aaa;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
-            line-height: 1.8;
-            margin-bottom: 14px;
+            line-height: 1.6;
+            margin-bottom: 8px;
             text-align: center;
         }
         
-        .instructions div { margin-bottom: 4px; }
+        .instructions div { margin-bottom: 2px; }
         .instructions strong { color: #fff; }
         .instructions .arrow { color: #4ff0ff; }
         
         .description {
             color: #9a9a9a;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 500;
-            line-height: 1.5;
-            margin-bottom: 14px;
+            line-height: 1.4;
+            margin-bottom: 8px;
             text-align: center;
         }
         
@@ -294,9 +294,9 @@
         
         .sentiment-hint {
             color: #4ff0ff;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 500;
-            margin: 8px 0;
+            margin: 4px 0;
             text-align: center;
         }
         
@@ -304,9 +304,9 @@
         
         .random-hint {
             color: #9580ff;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            margin: 10px 0;
+            margin: 6px 0;
             text-align: center;
         }
         
@@ -315,18 +315,18 @@
         .divider {
             height: 1px;
             background: rgba(255,255,255,0.06);
-            margin: 8px 0;
+            margin: 6px 0;
         }
         
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 8px;
+            gap: 10px;
+            margin-bottom: 6px;
         }
         
         .stat-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #555;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -334,7 +334,7 @@
         }
         
         .stat-value {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
         }
         
@@ -346,13 +346,13 @@
             justify-content: space-between;
             align-items: center;
             background: rgba(0,0,0,0.3);
-            padding: 8px 14px;
+            padding: 6px 12px;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         
-        .seed-label { color: #555; font-size: 0.75rem; letter-spacing: 2px; }
-        .seed-value { color: #a855f7; font-weight: 600; font-family: monospace; font-size: 1rem; }
+        .seed-label { color: #555; font-size: 0.7rem; letter-spacing: 2px; }
+        .seed-value { color: #a855f7; font-weight: 600; font-family: monospace; font-size: 0.9rem; }
         
         .wallet-bar {
             display: none;
@@ -370,15 +370,15 @@
         
         .btn-mint {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             letter-spacing: 1px;
         }
         
@@ -704,7 +704,16 @@
         async function connect() {
             console.log('Connect clicked');
             if (!window.ethereum) {
-                alert('No wallet detected! Please install MetaMask or use a wallet browser.');
+                // Check if on mobile - offer deep link to MetaMask
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (isMobile) {
+                    const dappUrl = window.location.href;
+                    const metamaskLink = `https://metamask.app.link/dapp/${dappUrl.replace('https://', '')}`;
+                    if (confirm('Open in MetaMask app?')) {
+                        window.location.href = metamaskLink;
+                        return;
+                    }
+                }
                 return showStatus('Please install MetaMask or Coinbase Wallet', 'error');
             }
             
