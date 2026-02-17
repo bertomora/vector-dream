@@ -227,7 +227,10 @@ ${seedEntries}
       
       // Deploy directly with Vercel CLI (don't rely on GitHub integration)
       console.log('  📦 Running vercel --prod...');
-      execSync('vercel --prod -y', { cwd: repoDir, stdio: 'inherit' });
+      const vercelCmd = process.env.VERCEL_TOKEN 
+        ? `vercel --prod -y --token=${process.env.VERCEL_TOKEN}`
+        : 'vercel --prod -y';
+      execSync(vercelCmd, { cwd: repoDir, stdio: 'inherit' });
       console.log('✅ Deployed!');
       
       // NOW refresh OpenSea metadata (after API is deployed with new image URLs)
