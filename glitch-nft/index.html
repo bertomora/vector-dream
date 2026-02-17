@@ -447,15 +447,21 @@
             }
             
             .header {
-                padding: 30px 20px;
-                margin-bottom: 40px;
+                padding: 20px 40px;
+                margin-bottom: 25px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 40px;
+                text-align: left;
             }
             
-            .header .logo h1 { font-size: 3rem; }
-            .header .logo .sub { font-size: 0.9rem; margin-top: 12px; letter-spacing: 5px; }
-            .header .badges { margin: 25px 0; }
-            .header .badge { padding: 12px 24px; font-size: 0.9rem; }
-            .header .description { font-size: 0.9rem; max-width: 800px; margin: 0 auto; line-height: 1.9; }
+            .header .logo { flex-shrink: 0; }
+            .header .logo h1 { font-size: 2.2rem; }
+            .header .logo .sub { font-size: 0.7rem; margin-top: 6px; letter-spacing: 4px; }
+            .header .badges { margin: 0; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+            .header .badge { padding: 8px 16px; font-size: 0.75rem; }
+            .header .description { font-size: 0.75rem; max-width: 500px; margin: 0; line-height: 1.6; flex: 1; }
             
             .content {
                 flex-direction: row;
@@ -509,18 +515,19 @@
         /* Large desktop - even bigger */
         @media (min-width: 1400px) {
             .main {
-                max-width: 1600px;
-                padding: 50px 80px;
+                max-width: 1700px;
+                padding: 30px 80px;
             }
             
-            .header { margin-bottom: 50px; }
-            .header .logo h1 { font-size: 3.5rem; }
+            .header { margin-bottom: 30px; gap: 60px; }
+            .header .logo h1 { font-size: 2.5rem; }
+            .header .description { max-width: 600px; font-size: 0.8rem; }
             
             .content { gap: 100px; }
             
             .preview-wrap {
-                width: min(60vw, 70vh);
-                max-width: 750px;
+                width: min(55vw, 75vh);
+                max-width: 800px;
             }
             
             .mint-side {
