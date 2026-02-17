@@ -18,8 +18,8 @@ const ARWEAVE_IMAGES = {
   "5": "https://gateway.irys.xyz/NFyLoHspGQXegRMh7jH4IaksTQWZwl5VhFe5S0Ouv4w",
   "6": "https://gateway.irys.xyz/lKSU8QsqWrDWe9bZ6K3VtOLqViYGEOcd0_eujAXzSpU",
   "7": "https://gateway.irys.xyz/VdDL7-KCGu9oj5wS2cxEMKu5p8FfSHiQGkPe6LyFEZI",
-  "8": "https://gateway.irys.xyz/pSHtlAHRPY24c9QuXKecsO_vg_FmUK4V_Lw8vbPVUXM",
-  "9": "https://gateway.irys.xyz/NNM5hAIHxnEebFfGrq-Lu8fEG7S7zhubj7QXZhAoVhU",
+  "8": "https://gateway.irys.xyz/B7E4BPLg1WApwIfQKmk14dbetT5m5whcMs3f2k_c_zI",
+  "9": "https://gateway.irys.xyz/Os-0pAzhjFXA9c7ciCcTnqe8SgtvPKHazIjSjCZm_Lo",
   "10": "https://gateway.irys.xyz/yzLHP6JoiJeal18XrEWVU85_sgbI81mi62FCfvHD3hM",
   "11": "https://gateway.irys.xyz/N8y8irlW2xG6kGVdYWbgo932zBnfOC-juC0slKrjOng"
 };
