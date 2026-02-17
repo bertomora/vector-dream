@@ -52,21 +52,27 @@
         
         .logo {
             font-family: 'Orbitron', 'Space Grotesk', sans-serif;
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             font-weight: 900;
-            background: linear-gradient(135deg, #ff6ec4, #a855f7, #6366f1, #4ff0ff);
-            background-size: 200% 200%;
+            background: linear-gradient(90deg, #ff6ec4, #ff6ec4, #a855f7, #4ff0ff, #4ff0ff);
+            background-size: 200% 100%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: 2px;
-            text-shadow: 0 0 60px rgba(168, 85, 247, 0.5);
-            filter: drop-shadow(0 0 20px rgba(255, 110, 196, 0.4));
-            animation: logoGlow 3s ease-in-out infinite;
+            letter-spacing: 4px;
+            filter: drop-shadow(0 0 25px rgba(255, 110, 196, 0.6)) drop-shadow(0 0 50px rgba(79, 240, 255, 0.3));
+            animation: logoGlow 4s ease-in-out infinite;
+            text-transform: uppercase;
         }
         
         @keyframes logoGlow {
-            0%, 100% { background-position: 0% 50%; filter: drop-shadow(0 0 20px rgba(255, 110, 196, 0.4)); }
-            50% { background-position: 100% 50%; filter: drop-shadow(0 0 30px rgba(79, 240, 255, 0.5)); }
+            0%, 100% { 
+                background-position: 0% 50%; 
+                filter: drop-shadow(0 0 25px rgba(255, 110, 196, 0.6)) drop-shadow(0 0 50px rgba(79, 240, 255, 0.3));
+            }
+            50% { 
+                background-position: 100% 50%; 
+                filter: drop-shadow(0 0 30px rgba(79, 240, 255, 0.7)) drop-shadow(0 0 60px rgba(255, 110, 196, 0.4));
+            }
         }
         
         .links {
@@ -412,7 +418,7 @@
     
     <div class="container">
         <div class="topbar">
-            <div class="logo">VĒCTOR DRĒAM</div>
+            <div class="logo">V三CTOR DR三AM</div>
             <div class="links">
                 <a href="https://basescan.org/address/0xbae88927f84adc3a16aa3a41340631f5f285fa0a" target="_blank">Contract</a>
                 <a href="https://opensea.io/collection/vector-dreamz" target="_blank">OpenSea</a>
