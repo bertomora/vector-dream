@@ -166,15 +166,28 @@ ${imageEntries}
       // Read the API file
       const apiPath = path.join(__dirname, '..', 'api', 'dynamic', '[tokenId].js');
       let apiContent = fs.readFileSync(apiPath, 'utf8');
+      const originalContent = apiContent;
       
-      // Replace the ARWEAVE_IMAGES block
-      apiContent = apiContent.replace(
-        /\/\/ Arweave image URLs.*?const ARWEAVE_IMAGES = \{[\s\S]*?\};/,
-        newImagesBlock
-      );
+      // Replace the ARWEAVE_IMAGES block (handle both CRLF and LF)
+      const regex = /\/\/ Arweave image URLs[^\n]*\r?\nconst ARWEAVE_IMAGES = \{[^}]*\};/;
+      if (!regex.test(apiContent)) {
+        console.log('  ⚠️ Could not find ARWEAVE_IMAGES block in API file');
+        console.log('  Attempting alternative pattern...');
+        // Try simpler pattern
+        apiContent = apiContent.replace(
+          /const ARWEAVE_IMAGES = \{[^}]*\};/,
+          newImagesBlock
+        );
+      } else {
+        apiContent = apiContent.replace(regex, newImagesBlock);
+      }
       
-      fs.writeFileSync(apiPath, apiContent);
-      console.log('  ✅ API file updated');
+      if (apiContent === originalContent) {
+        console.log('  ⚠️ API file unchanged - regex may not have matched');
+      } else {
+        fs.writeFileSync(apiPath, apiContent);
+        console.log('  ✅ API file updated');
+      }
       
       // Commit and push
       console.log('\n🚀 Deploying to Vercel via git push...');
