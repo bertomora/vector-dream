@@ -4,22 +4,26 @@
  * With Arweave images from processed mints
  */
 
-// Arweave URLs (using ar-io.net gateway for reliability)
-const ARWEAVE_ANIMATION = 'https://ar-io.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8';
+// Arweave URLs - V2 (stabilized) is default, V1 only for legacy tokens
+const ARWEAVE_ANIMATION_V1 = 'https://ar-io.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8';
+const ARWEAVE_ANIMATION_V2 = 'https://arweave.net/DbdIWyf15_PtRdvW8QC05v_z4I8kpCqRk2gHt3snTV0';
+const V1_LEGACY_TOKENS = [3, 4, 5, 6, 7]; // Keep original animation for these only
+const getAnimationUrl = (tokenId) => V1_LEGACY_TOKENS.includes(parseInt(tokenId)) ? ARWEAVE_ANIMATION_V1 : ARWEAVE_ANIMATION_V2;
 const FALLBACK_IMAGE_BASE = 'https://vector-dream.vercel.app/api/svg';
 
 // Arweave image URLs (updated by process-new-mints.js, commit to deploy)
 const ARWEAVE_IMAGES = {
-  "1": "https://ar-io.net/0dU4C8ESkx2yeoQcBcJAKE2Nof1sfMCAKN83xnQW9oE",
-  "2": "https://ar-io.net/PUk8g3SRqGdFFVk8upHQXcZdNA8I7sYpQGzWs3AQViM",
-  "3": "https://ar-io.net/lnMWGqQUvcVNUUpZ1PLTtxDW7DCeFSe4SAB_fe1SzHE",
-  "4": "https://ar-io.net/j2lOe68natrU72O-Y8gbQPwIzopaxtNPCkZLCnnLsQQ",
-  "5": "https://ar-io.net/uFpAR2_P6Q2gH9lVKOzxmR7bnlCGkshzxDbLll7i5YQ",
-  "6": "https://ar-io.net/9AFYuxs1vwGTamA3Kj67cTc9iANH_w6or1R1keT37t8",
-  "7": "https://ar-io.net/6mibupU3xV7yCrn-4FMqCQqqXK56TT4CPDOcPSj5M0g",
-  "8": "https://ar-io.net/FLI9Ae29n2g9fnaduvwpGxiBDGn6wMY7XCJ6EJhk6aM",
+  "1": "https://arweave.net/0dU4C8ESkx2yeoQcBcJAKE2Nof1sfMCAKN83xnQW9oE",
+  "2": "https://arweave.net/PUk8g3SRqGdFFVk8upHQXcZdNA8I7sYpQGzWs3AQViM",
+  "3": "https://arweave.net/lnMWGqQUvcVNUUpZ1PLTtxDW7DCeFSe4SAB_fe1SzHE",
+  "4": "https://arweave.net/j2lOe68natrU72O-Y8gbQPwIzopaxtNPCkZLCnnLsQQ",
+  "5": "https://arweave.net/uFpAR2_P6Q2gH9lVKOzxmR7bnlCGkshzxDbLll7i5YQ",
+  "6": "https://arweave.net/9AFYuxs1vwGTamA3Kj67cTc9iANH_w6or1R1keT37t8",
+  "7": "https://arweave.net/6mibupU3xV7yCrn-4FMqCQqqXK56TT4CPDOcPSj5M0g",
+  "8": "https://arweave.net/FLI9Ae29n2g9fnaduvwpGxiBDGn6wMY7XCJ6EJhk6aM",
   "9": "https://arweave.net/tIAVTt4Ys57tuf4cjeeG3eMuN1Zr2aY6dMZz4fOL3SM",
-  "10": "https://arweave.net/7rfuoDskU-GrFJl_6fdXSAmMoQzdADQG297uvwGIOoM"
+  "10": "https://arweave.net/7rfuoDskU-GrFJl_6fdXSAmMoQzdADQG297uvwGIOoM",
+  "11": "https://ar-io.net/NQkMicrds6I_GOFpeRF2kxhyHm3kscuKfJNc-K9YVRo"
 };
 
 // Mulberry32 PRNG - deterministic from seed
@@ -168,7 +172,7 @@ module.exports = async (req, res) => {
     name: uniqueName,
     description: description,
     image: imageUrl,
-    animation_url: `${ARWEAVE_ANIMATION}?seed=${seed}`,
+    animation_url: `${getAnimationUrl(tokenId)}?seed=${seed}`,
     external_url: "https://vector-dream.vercel.app",
     attributes
   };

@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>VΞCTOR DRΞΛM v2</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    body { background: #000; overflow: hidden; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    canvas { display: block; width: 100%; height: 100%; max-width: 100vmin; max-height: 100vmin; image-rendering: pixelated; }
+    #ui {
+      position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 12px; align-items: center; z-index: 100;
+      background: rgba(0,0,0,0.9); padding: 10px 20px; border: 1px solid #f0f3;
+    }
+    #ui button { background: transparent; border: 1px solid #0ff; color: #0ff; padding: 6px 14px; font: 10px monospace; cursor: pointer; }
+    #ui button:hover { background: #0ff1; }
+    .info { color: #f0f8; font-size: 9px; }
+    #hud { position: fixed; top: 15px; right: 15px; font-size: 9px; text-align: right; z-index: 100; color: #fff4; }
+    #hud .up { color: #0ff; } #hud .down { color: #f0f; }
+    /* Minted pieces show ONLY the art - no UI */
+    body.minted #ui { display: none !important; }
+    body.minted #hud { display: none !important; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><div>BTC <span id="btc" class="up">---</span></div><div>ETH <span id="eth" class="up">---</span></div></div>
+<div id="ui"><div class="info">#<span id="seed-num">0</span></div><button id="randomize">GENERATE</button><button id="save">CAPTURE</button></div>
+
+<script>
+let M = { sent: 0, vol: 0.3 };
+async function fetchM() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+    const d = await r.json();
+    M.btc = d.bitcoin.usd_24h_change || 0; M.eth = d.ethereum.usd_24h_change || 0;
+    M.sent = Math.tanh((M.btc + M.eth) / 8);
+    M.vol = Math.min(1, (Math.abs(M.btc) + Math.abs(M.eth)) / 12);
+    document.getElementById('btc').textContent = (M.btc >= 0 ? '+' : '') + M.btc.toFixed(1) + '%';
+    document.getElementById('btc').className = M.btc >= 0 ? 'up' : 'down';
+    document.getElementById('eth').textContent = (M.eth >= 0 ? '+' : '') + M.eth.toFixed(1) + '%';
+    document.getElementById('eth').className = M.eth >= 0 ? 'up' : 'down';
+  } catch(e) {}
+}
+fetchM(); setInterval(fetchM, 45000);
+
+// Check if seed provided in URL (minted piece) or not (preview mode)
+const urlSeed = new URLSearchParams(window.location.search).get('seed');
+const isMinted = urlSeed !== null; // If seed in URL, this is a minted/owned piece
+let seed = parseInt(urlSeed) || Math.floor(Math.random() * 100000);
+
+// Lock the UI if this is a minted piece
+if (isMinted) {
+  document.body.classList.add('minted');
+}
+function mulberry32(a) { return function() { let t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; } }
+
+let R, C, lastVariant = null;
+const VARIANTS = ['A','B','C','D','E','F'];
+
+function gen(s) {
+  seed = s; R = mulberry32(seed);
+  
+  // === VARIANT SELECTION (6 distinct variants, avoids repeating last) ===
+  let variant;
+  let variantIndex = Math.floor(R() * VARIANTS.length);
+  variant = VARIANTS[variantIndex];
+  
+  // If same as last, pick a different one
+  if (variant === lastVariant && VARIANTS.length > 1) {
+    const available = VARIANTS.filter(v => v !== lastVariant);
+    variant = available[Math.floor(R() * available.length)];
+  }
+  lastVariant = variant;
+  
+  // Map variant to style family
+  let style;
+  if (variant === 'A') style = 'synthwave';
+  else if (variant === 'B') style = 'databend';
+  else if (variant === 'C') style = 'corrupt';
+  else if (variant === 'D') style = 'neon';
+  else if (variant === 'E') style = 'isometric';
+  else style = 'void';
+  
+  // === SUB-STYLE VARIANT (A, B, or C within each style) ===
+  const subStyle = R() < 0.33 ? 'A' : (R() < 0.66 ? 'B' : 'C');
+  
+  // === COMPOSITION ZONE (where elements concentrate) ===
+  const zoneRoll = R();
+  let zone;
+  if (zoneRoll < 0.15) zone = 'top';
+  else if (zoneRoll < 0.30) zone = 'bottom';
+  else if (zoneRoll < 0.45) zone = 'left';
+  else if (zoneRoll < 0.60) zone = 'right';
+  else if (zoneRoll < 0.75) zone = 'center';
+  else if (zoneRoll < 0.88) zone = 'edges';
+  else zone = 'scattered';
+  
+  // === BACKGROUND TYPE (with more even distribution) ===
+  const bgRoll = R();
+  let bgType;
+  if (bgRoll < 0.33) bgType = 'solid';
+  else if (bgRoll < 0.66) bgType = 'gradient';
+  else bgType = 'textured';
+  
+  // === EXPANDED COLOR PALETTES (32 options - including luxury tones) ===
+  const pals = [
+    [330, 185, 0],     // pink/cyan/red
+    [320, 190, 30],    // magenta/teal/orange
+    [340, 175, 200],   // coral/aqua/purple
+    [310, 195, 15],    // fuchsia/mint/gold
+    [350, 170, 280],   // rose/turquoise/violet
+    [20, 180, 300],    // orange/cyan/magenta
+    [280, 200, 40],    // purple/teal/yellow
+    [345, 160, 220],   // red/blue/lavender
+    [190, 330, 60],    // cyan/pink/yellow
+    [260, 30, 170],    // blue/orange/magenta
+    [15, 195, 315],    // red-orange/teal/purple
+    [300, 180, 90],    // magenta/cyan/lime
+    [45, 200, 330],    // gold/cyan/violet
+    [270, 90, 180],    // purple/yellow-green/magenta
+    [0, 210, 60],      // red/cyan-blue/yellow
+    [225, 45, 135],    // blue/orange/pink
+    [120, 300, 60],    // green/magenta/yellow
+    [180, 0, 270],     // cyan/red/purple
+    [60, 240, 0],      // yellow/blue/red
+    [150, 30, 330],    // teal/orange/violet
+    [90, 270, 180],    // lime/purple/cyan
+    [210, 60, 300],    // sky-blue/yellow/magenta
+    [240, 120, 0],     // blue/green/red
+    [30, 150, 270],    // orange/teal/purple
+    // Luxury/gallery tones
+    [35, 200, 280],    // bronze/teal/indigo
+    [45, 190, 320],    // gold/cyan/violet
+    [25, 210, 340],    // copper/aqua/magenta
+    [220, 40, 280],    // deep blue/amber/purple
+    [350, 200, 250],   // rose gold/teal/lavender
+    [200, 35, 310],    // steel blue/gold/fuchsia
+    [270, 45, 190],    // royal purple/amber/cyan
+    [15, 230, 290],    // ember/turquoise/violet
+  ];
+  const pal = pals[Math.floor(R() * pals.length)];
+  
+  // === COLOR INTENSITY (varies dramatically - MORE RANGE) ===
+  const satBoost = R() < 0.3 ? 0.35 : (R() < 0.6 ? 0 : -0.2);
+  const colorIntensity = 0.35 + R() * 0.9 + satBoost; // 0.35 to 1.45 (wider range)
+  const colorShift = (R() - 0.5) * 200;    // -100 to +100 hue shift (was ±70)
+  
+  // === BRIGHTNESS/CONTRAST (elegant, never overblown) ===
+  const brightness = 0.7 + R() * 0.3;    // 0.7 to 1.0
+  
+  // === BASE CONFIG (all zeroed - styles add their own) ===
+  C = {
+    style: style,
+    subStyle: subStyle,
+    zone: zone,
+    bgType: bgType,
+    brightness: brightness,
+    // Colors with maximum variation - each color gets independent shift
+    h1: pal[0] + colorShift + (R()-.5)*180,    // more variation
+    h2: pal[1] + (R()-.5)*160 + (R()-.5)*100,  // independent of colorShift, wider range
+    h3: pal[2] + (R()-.5)*200,                 // fully independent, widest range
+    colorIntensity: colorIntensity,
+    // All effects start at 0 (pixelSize gets randomized baseline - MORE RANGE)
+    clusters: 0, density: 0, pixelSize: 1 + Math.floor(R() * 6), scatter: 0,
+    glitchAmt: 0, rectGlitch: 0, diagStreak: 0,
+    spireCount: 0, spireIntensity: 0, gridIntensity: 0, horizonGlow: 0, bandGlitch: 0,
+    spireSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
+    dripIntensity: 0, rippleAmt: 0, auroraAmt: 0, grainAmt: 0,
+    chromaAmt: 0, hSortAmt: 0, marbleAmt: 0, mirrorAmt: 0, dataBlocks: 0,
+    blockSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
+    crtAmt: 0, vhsAmt: 0, posterize: 0, geoShapes: 0, edgeGlow: 0, noiseWarp: 0, invertAmt: 0,
+    shapeSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
+    isoCubes: 0, isoSize: 0.15, isoRgbSplit: 0,
+    cubeSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
+    primSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
+    // Lightning bolts (for void style)
+    lightningAmt: 0,
+    boltSeeds: [R()*1000, R()*1000, R()*1000, R()*1000, R()*1000, R()*1000],
+    // Composition offsets based on zone
+    zoneOffsetX: 0, zoneOffsetY: 0,
+    bgGradientAngle: R() * 6.28,
+    bgNoiseScale: 5 + R() * 20
+  };
+  
+  // === ZONE OFFSETS (even more dramatic positioning) ===
+  if (zone === 'top') { C.zoneOffsetY = 0.3 + R() * 0.45; }
+  else if (zone === 'bottom') { C.zoneOffsetY = -0.3 - R() * 0.45; }
+  else if (zone === 'left') { C.zoneOffsetX = -0.3 - R() * 0.45; }
+  else if (zone === 'right') { C.zoneOffsetX = 0.3 + R() * 0.45; }
+  else if (zone === 'edges') { C.zoneOffsetX = (R() < 0.5 ? -1 : 1) * (0.4 + R() * 0.4); }
+  else if (zone === 'center') { C.zoneOffsetX = (R() - 0.5) * 0.25; C.zoneOffsetY = (R() - 0.5) * 0.25; }
+  else if (zone === 'scattered') { C.zoneOffsetX = (R() - 0.5) * 0.7; C.zoneOffsetY = (R() - 0.5) * 0.7; }
+  
+  // === STYLE-SPECIFIC OVERRIDES (with A/B/C sub-variants) ===
+  if (style === 'synthwave') {
+    C.grainAmt = 0.02 + R() * 0.04;
+    if (subStyle === 'A') { // Heavy spires, minimal grid
+      C.pixelSize = 2 + Math.floor(R() * 2);
+      C.spireCount = 5 + Math.floor(R() * 3);
+      C.spireIntensity = 0.5 + R() * 0.4;
+      C.gridIntensity = R() * 0.1;
+      C.horizonGlow = 0.15 + R() * 0.2;
+    } else if (subStyle === 'B') { // Grid focused, few spires
+      C.pixelSize = 3 + Math.floor(R() * 2);
+      C.spireCount = Math.floor(R() * 2);
+      C.spireIntensity = 0.2 + R() * 0.2;
+      C.gridIntensity = 0.35 + R() * 0.35;
+      C.horizonGlow = 0.2 + R() * 0.25;
+      C.bandGlitch = 0.1 + R() * 0.15;
+    } else { // Balanced with mirror
+      C.pixelSize = 2 + Math.floor(R() * 3);
+      C.spireCount = 3 + Math.floor(R() * 3);
+      C.spireIntensity = 0.35 + R() * 0.3;
+      C.gridIntensity = 0.15 + R() * 0.2;
+      C.horizonGlow = 0.1 + R() * 0.15;
+      C.mirrorAmt = 0.8 + R() * 0.2;
+    }
+  }
+  else if (style === 'databend') {
+    C.grainAmt = 0.06 + R() * 0.1;
+    if (subStyle === 'A') { // Drip heavy
+      C.pixelSize = 2;
+      C.dripIntensity = 0.5 + R() * 0.4;
+      C.auroraAmt = 0.1 + R() * 0.15;
+      C.hSortAmt = 0.1 + R() * 0.15;
+    } else if (subStyle === 'B') { // Aurora focused
+      C.pixelSize = 2 + Math.floor(R() * 2);
+      C.dripIntensity = 0.1 + R() * 0.2;
+      C.auroraAmt = 0.4 + R() * 0.4;
+      C.hSortAmt = 0.2 + R() * 0.25;
+      C.scatter = 0.15 + R() * 0.2;
+    } else { // Sort-heavy with ripple
+      C.pixelSize = 3;
+      C.dripIntensity = 0.15 + R() * 0.2;
+      C.hSortAmt = 0.4 + R() * 0.4;
+      C.rippleAmt = 0.25 + R() * 0.3;
+    }
+  }
+  else if (style === 'corrupt') {
+    C.grainAmt = 0.04 + R() * 0.08;
+    if (subStyle === 'A') { // Block heavy
+      C.pixelSize = 4 + Math.floor(R() * 3);
+      C.dataBlocks = 4 + Math.floor(R() * 4);
+      C.glitchAmt = 0.3 + R() * 0.3;
+      C.chromaAmt = 0.15 + R() * 0.2;
+      C.clusters = 1;
+      C.density = 0.2 + R() * 0.2;
+    } else if (subStyle === 'B') { // Chromatic chaos
+      C.pixelSize = 3 + Math.floor(R() * 2);
+      C.dataBlocks = 1 + Math.floor(R() * 2);
+      C.chromaAmt = 0.4 + R() * 0.4;
+      C.glitchAmt = 0.5 + R() * 0.4;
+      C.rectGlitch = 0.4 + R() * 0.35;
+      C.clusters = 2;
+      C.density = 0.35 + R() * 0.3;
+    } else { // Band glitch focus
+      C.pixelSize = 3 + Math.floor(R() * 3);
+      C.bandGlitch = 0.4 + R() * 0.4;
+      C.rectGlitch = 0.35 + R() * 0.35;
+      C.dataBlocks = 2 + Math.floor(R() * 2);
+      C.scatter = 0.4 + R() * 0.3;
+      C.clusters = 2;
+      C.density = 0.3 + R() * 0.3;
+    }
+  }
+  else if (style === 'liquid') {
+    C.grainAmt = 0.02 + R() * 0.04;
+    if (subStyle === 'A') { // Heavy marble
+      C.pixelSize = 2;
+      C.marbleAmt = 0.4 + R() * 0.35;
+      C.rippleAmt = 0.1 + R() * 0.15;
+      C.clusters = 1;
+      C.density = 0.15 + R() * 0.2;
+    } else if (subStyle === 'B') { // Ripple focused
+      C.pixelSize = 2 + Math.floor(R() * 2);
+      C.marbleAmt = 0.15 + R() * 0.2;
+      C.rippleAmt = 0.4 + R() * 0.35;
+      C.auroraAmt = 0.2 + R() * 0.25;
+      C.clusters = 2;
+      C.density = 0.2 + R() * 0.25;
+    } else { // Mirror liquid
+      C.pixelSize = 2;
+      C.marbleAmt = 0.3 + R() * 0.25;
+      C.rippleAmt = 0.25 + R() * 0.25;
+      C.dripIntensity = 0.2 + R() * 0.25;
+      C.mirrorAmt = 0.9 + R() * 0.1;
+    }
+  }
+  else if (style === 'minimal') {
+    // Brutalist minimal - stark, intentional, dark negative space
+    C.grainAmt = 0.06 + R() * 0.08;
+    C.brightness *= 0.85;  // darker base
+    if (subStyle === 'A') { // Ultra sparse brutalist
+      C.pixelSize = 4 + Math.floor(R() * 3);
+      C.clusters = 1;
+      C.density = 0.05 + R() * 0.08;
+      C.scatter = 0.4 + R() * 0.25;
+    } else if (subStyle === 'B') { // Stark geometric
+      C.pixelSize = 3 + Math.floor(R() * 2);
+      C.clusters = 1;
+      C.density = 0.08 + R() * 0.1;
+      C.diagStreak = 0.15 + R() * 0.2;
+      C.scatter = 0.2 + R() * 0.2;
+      C.gridIntensity = 0.03 + R() * 0.05;
+    } else { // Minimal with harsh accents
+      C.pixelSize = 3 + Math.floor(R() * 3);
+      C.clusters = 1;
+      C.density = 0.06 + R() * 0.1;
+      C.spireCount = 1 + Math.floor(R() * 2);
+      C.spireIntensity = 0.15 + R() * 0.15;
+      C.chromaAmt = 0.1 + R() * 0.1;
+    }
+  }
+  else if (style === 'retro') {
+    if (subStyle === 'A') { // Heavy CRT
+      C.pixelSize = 4 + Math.floor(R() * 3);
+      C.crtAmt = 0.6 + R() * 0.35;
+      C.vhsAmt = 0.1 + R() * 0.15;
+      C.posterize = 6 + Math.floor(R() * 4);
+      C.grainAmt = 0.06 + R() * 0.08;
+      C.clusters = 2;
+      C.density = 0.3 + R() * 0.25;
+    } else if (subStyle === 'B') { // VHS focused
+      C.pixelSize = 3 + Math.floor(R() * 2);
+      C.crtAmt = 0.2 + R() * 0.2;
+      C.vhsAmt = 0.4 + R() * 0.4;
+      C.posterize = 4 + Math.floor(R() * 3);
+      C.grainAmt = 0.1 + R() * 0.12;
+      C.bandGlitch = 0.2 + R() * 0.2;
+      C.clusters = 1;
+      C.density = 0.2 + R() * 0.2;
+    } else { // Posterized
+      C.pixelSize = 5 + Math.floor(R() * 4);
+      C.crtAmt = 0.25 + R() * 0.25;
+      C.posterize = 3 + Math.floor(R() * 2);
+      C.grainAmt = 0.12 + R() * 0.1;
+      C.chromaAmt = 0.15 + R() * 0.2;
+      C.clusters = 2;
+      C.density = 0.25 + R() * 0.3;
+    }
+  }
+  else if (style === 'neon') {
+    C.grainAmt = 0.01 + R() * 0.03;
+    if (subStyle === 'A') { // Glow heavy
+      C.pixelSize = 2;
+      C.edgeGlow = 0.6 + R() * 0.35;
+      C.clusters = 3 + Math.floor(R() * 2);
+      C.density = 0.4 + R() * 0.35;
+      C.diagStreak = 0.2 + R() * 0.2;
+    } else if (subStyle === 'B') { // Streak neon
+      C.pixelSize = 2 + Math.floor(R() * 2);
+      C.edgeGlow = 0.3 + R() * 0.25;
+      C.diagStreak = 0.5 + R() * 0.4;
+      C.clusters = 2;
+      C.density = 0.3 + R() * 0.3;
+      C.chromaAmt = 0.2 + R() * 0.2;
+    } else { // Neon grid
+      C.pixelSize = 2;
+      C.edgeGlow = 0.4 + R() * 0.3;
+      C.gridIntensity = 0.2 + R() * 0.25;
+      C.clusters = 2;
+      C.density = 0.35 + R() * 0.3;
+      C.mirrorAmt = 0.7 + R() * 0.3;
+    }
+  }
+  else if (style === 'geometric') {
+    C.grainAmt = 0.01 + R() * 0.03;
+    if (subStyle === 'A') { // Shape heavy
+      C.pixelSize = 3 + Math.floor(R() * 2);
+      C.geoShapes = 5 + Math.floor(R() * 4);
+      C.clusters = 0;
+      C.density = 0.05;
+      C.mirrorAmt = R() < 0.5 ? 0.9 : 0;
+    } else if (subStyle === 'B') { // Iso + shapes
+      C.pixelSize = 2 + Math.floor(R() * 2);
+      C.geoShapes = 2 + Math.floor(R() * 3);
+      C.isoCubes = 3 + Math.floor(R() * 3);
+      C.isoSize = 0.1 + R() * 0.1;
+      C.isoRgbSplit = 0.01 + R() * 0.015;
+    } else { // Blocks + shapes
+      C.pixelSize = 3 + Math.floor(R() * 2);
+      C.geoShapes = 3 + Math.floor(R() * 3);
+      C.dataBlocks = 2 + Math.floor(R() * 3);
+      C.rectGlitch = 0.25 + R() * 0.25;
+      C.edgeGlow = 0.2 + R() * 0.2;
+    }
+  }
+  else if (style === 'isometric') {
+    C.grainAmt = 0.015 + R() * 0.025;
+    if (subStyle === 'A') { // Dense cubes
+      C.pixelSize = 2;
+      C.isoCubes = 6 + Math.floor(R() * 3);
+      C.isoSize = 0.08 + R() * 0.08;
+      C.isoRgbSplit = 0.02 + R() * 0.025;
+    } else if (subStyle === 'B') { // Large cubes + grid
+      C.pixelSize = 2 + Math.floor(R() * 2);
+      C.isoCubes = 3 + Math.floor(R() * 2);
+      C.isoSize = 0.15 + R() * 0.15;
+      C.isoRgbSplit = 0.015 + R() * 0.02;
+      C.gridIntensity = 0.1 + R() * 0.15;
+    } else { // Cubes + geo shapes
+      C.pixelSize = 2;
+      C.isoCubes = 4 + Math.floor(R() * 3);
+      C.isoSize = 0.1 + R() * 0.1;
+      C.isoRgbSplit = 0.012 + R() * 0.018;
+      C.geoShapes = 2 + Math.floor(R() * 2);
+      C.mirrorAmt = R() < 0.4 ? 0.95 : 0;
+    }
+  }
+  else if (style === 'void') {
+    // Deep void - brutalist darkness with lightning
+    C.grainAmt = 0.08 + R() * 0.1;
+    C.brightness *= 0.8;  // embrace the darkness
+    C.lightningAmt = 0.6 + R() * 0.4; // Lightning bolts for void style
+    if (subStyle === 'A') { // Dark scatter with lightning
+      C.pixelSize = 3 + Math.floor(R() * 3);
+      C.clusters = 1;
+      C.density = 0.04 + R() * 0.06;
+      C.scatter = 0.5 + R() * 0.3;
+      C.noiseWarp = 0.15 + R() * 0.15;
+    } else if (subStyle === 'B') { // Stark void (no invert - too bright)
+      C.pixelSize = 3 + Math.floor(R() * 2);
+      C.clusters = 1;
+      C.density = 0.05 + R() * 0.08;
+      C.scatter = 0.4 + R() * 0.25;
+      C.noiseWarp = 0.1 + R() * 0.12;
+      C.chromaAmt = 0.15 + R() * 0.15;
+    } else { // Spire void
+      C.pixelSize = 2 + Math.floor(R() * 2);
+      C.spireCount = 2 + Math.floor(R() * 2);
+      C.spireIntensity = 0.12 + R() * 0.12;
+      C.horizonGlow = 0.06 + R() * 0.08;
+      C.scatter = 0.3 + R() * 0.25;
+      C.auroraAmt = 0.08 + R() * 0.12;
+    }
+  }
+  // === VARIANT-SPECIFIC MUTATIONS (only enhance current variant, no cross-contamination) ===
+  // Universal subtle variations
+  if (R() < 0.15) C.mirrorAmt = 0.85 + R() * 0.15;
+  if (R() < 0.12) { C.h1 += (R() - 0.5) * 60; }
+  if (R() < 0.10) C.grainAmt += 0.05 + R() * 0.1;
+  
+  // Variant-specific boosts
+  if (variant === 'A') { // Synthwave
+    if (R() < 0.15) C.spireIntensity += 0.15 + R() * 0.2;
+    if (R() < 0.12) C.gridIntensity += 0.1 + R() * 0.15;
+    if (R() < 0.10) C.horizonGlow += 0.1 + R() * 0.15;
+    if (R() < 0.08) C.bandGlitch += 0.15 + R() * 0.2;
+  }
+  else if (variant === 'B') { // Databend
+    if (R() < 0.15) C.dripIntensity += 0.15 + R() * 0.25;
+    if (R() < 0.12) C.auroraAmt += 0.15 + R() * 0.2;
+    if (R() < 0.10) C.hSortAmt += 0.15 + R() * 0.2;
+    if (R() < 0.08) C.scatter += 0.1 + R() * 0.15;
+  }
+  else if (variant === 'C') { // Corrupt
+    if (R() < 0.15) C.glitchAmt += 0.2 + R() * 0.25;
+    if (R() < 0.12) C.chromaAmt += 0.15 + R() * 0.25;
+    if (R() < 0.10) C.bandGlitch += 0.2 + R() * 0.25;
+    if (R() < 0.08) { C.density += 0.15; C.scatter += 0.15; }
+  }
+  else if (variant === 'D') { // Neon
+    if (R() < 0.15) C.edgeGlow += 0.2 + R() * 0.25;
+    if (R() < 0.12) C.diagStreak += 0.15 + R() * 0.25;
+    if (R() < 0.10) C.chromaAmt += 0.1 + R() * 0.15;
+    if (R() < 0.08) { C.density += 0.1; C.clusters += 1; }
+  }
+  else if (variant === 'E') { // Isometric
+    if (R() < 0.15) C.isoCubes += 2 + Math.floor(R() * 3);
+    if (R() < 0.12) C.isoRgbSplit += 0.01 + R() * 0.015;
+    if (R() < 0.08) C.gridIntensity += 0.08 + R() * 0.12;
+  }
+  else if (variant === 'F') { // Void
+    if (R() < 0.15) C.noiseWarp += 0.1 + R() * 0.15;
+    if (R() < 0.12) C.scatter += 0.15 + R() * 0.2;
+    if (R() < 0.10) C.grainAmt += 0.08 + R() * 0.1;
+    if (R() < 0.08) C.auroraAmt += 0.08 + R() * 0.12;
+  }
+  
+  // Display variant info
+  document.getElementById('seed-num').textContent = seed + ' [Variant ' + variant + '] ' + zone;
+}
+gen(seed);
+
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl');
+
+const VS = `attribute vec2 p;varying vec2 uv;void main(){uv=p*.5+.5;gl_Position=vec4(p,0,1);}`;
+
+const FS = `
+precision highp float;
+varying vec2 uv;
+uniform float t;
+uniform vec2 res;
+uniform float h1,h2,h3,clusters,density,pixelSize,scatter,glitchAmt,rectGlitch,diagStreak;
+uniform float sent,vol;
+uniform float spireCount,spireIntensity,gridIntensity,horizonGlow,bandGlitch;
+uniform float spireSeeds[6];
+uniform float dripIntensity,rippleAmt,auroraAmt,grainAmt;
+uniform float chromaAmt,hSortAmt,marbleAmt,mirrorAmt,dataBlocks;
+uniform float blockSeeds[5];
+uniform float crtAmt,vhsAmt,posterize,geoShapes,edgeGlow,noiseWarp,invertAmt;
+uniform float shapeSeeds[6];
+uniform float isoCubes,isoSize,isoRgbSplit;
+uniform float cubeSeeds[8];
+uniform float primSeeds[5];
+uniform float lightningAmt;
+uniform float boltSeeds[6];
+uniform float zoneOffsetX,zoneOffsetY,bgGradientAngle,bgNoiseScale;
+uniform float colorIntensity,brightness;
+uniform int bgType; // 0=solid, 1=gradient, 2=textured
+
+#define PI 3.14159265
+#define TAU 6.28318531
+
+float H(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float H3(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+
+vec3 hsv(float h,float s,float v){
+  vec3 c=clamp(abs(mod(h*6.+vec3(0,4,2),6.)-3.)-1.,0.,1.);
+  return v*mix(vec3(1),c,s);
+}
+
+void main(){
+  // Pixelate UV
+  float pxSize = pixelSize / res.x;
+  vec2 puv = floor(uv / pxSize) * pxSize;
+  vec2 pxCoord = floor(uv * res.x / pixelSize);
+  
+  vec2 p = (puv - 0.5) * 2.0;
+  
+  // === MIRROR EFFECT (applied early to UV) ===
+  if(mirrorAmt > 0.1) {
+    p.x = mix(p.x, abs(p.x), mirrorAmt);
+  }
+  
+  // === LIQUID MARBLE FLOW (UV displacement) ===
+  if(marbleAmt > 0.02) {
+    float flowX = sin(p.y * 4.0 + t * 0.2) * cos(p.x * 3.0 + t * 0.15);
+    float flowY = cos(p.x * 5.0 - t * 0.25) * sin(p.y * 2.5 + t * 0.1);
+    vec2 marble = vec2(flowX, flowY) * marbleAmt * 0.15;
+    p += marble;
+  }
+  
+  // === NOISE WARP (organic displacement) ===
+  if(noiseWarp > 0.02) {
+    float warpX = sin(p.x * 8.0 + p.y * 4.0 + t * 0.3) * cos(p.y * 6.0 + t * 0.2);
+    float warpY = cos(p.x * 5.0 + p.y * 7.0 - t * 0.25) * sin(p.x * 4.0 + t * 0.15);
+    p += vec2(warpX, warpY) * noiseWarp * 0.12;
+  }
+  
+  // === VHS WOBBLE (horizontal distortion) ===
+  if(vhsAmt > 0.02) {
+    float wobble = sin(p.y * 50.0 + t * 8.0) * sin(p.y * 3.0 + t * 0.5);
+    p.x += wobble * vhsAmt * 0.04;
+    // VHS tracking lines
+    float tracking = step(0.97, fract(p.y * 8.0 + t * 0.3));
+    p.x += tracking * (H(vec2(floor(p.y * 8.0), t)) - 0.5) * 0.2 * vhsAmt;
+  }
+  
+  // === DYNAMIC BACKGROUND ===
+  vec3 col = vec3(0.01, 0.005, 0.015);
+  if(bgType == 1) {
+    // Gradient background
+    vec2 gradDir = vec2(cos(bgGradientAngle), sin(bgGradientAngle));
+    float gradT = dot(puv - 0.5, gradDir) + 0.5;
+    vec3 gradCol1 = hsv(h1 / 360.0, 0.3 * colorIntensity, 0.08);
+    vec3 gradCol2 = hsv(h2 / 360.0, 0.25 * colorIntensity, 0.04);
+    col = mix(gradCol1, gradCol2, gradT);
+  } else if(bgType == 2) {
+    // Textured background
+    float noise = H(floor(puv * bgNoiseScale));
+    col = vec3(0.01 + noise * 0.03, 0.005 + noise * 0.02, 0.015 + noise * 0.025);
+  }
+  
+  // Apply zone offset to working position
+  vec2 zp = p - vec2(zoneOffsetX, zoneOffsetY);
+  
+  // === SYNTHWAVE HORIZON GRADIENT (subtle, seed-controlled) ===
+  if(horizonGlow > 0.02) {
+    float horizonY = -0.3 + 0.1 * sin(t * 0.05);
+    if(p.y < horizonY + 0.4) {
+      float gradT = smoothstep(horizonY - 0.2, horizonY + 0.4, p.y);
+      vec3 deepTeal = vec3(0.02, 0.04, 0.06);
+      vec3 hGlow = hsv((h1 + 20.0) / 360.0, 0.6, horizonGlow);
+      col = mix(hGlow, deepTeal, gradT);
+    }
+  }
+  
+  // Colors with intensity variation
+  vec3 c1 = hsv((h1 + sent * 20.0) / 360.0, 0.95 * colorIntensity, 1.0);
+  vec3 c2 = hsv((h2 + sent * 15.0) / 360.0, 0.9 * colorIntensity, 1.0);
+  vec3 c3 = hsv((h3 + sent * 25.0) / 360.0, 0.85 * colorIntensity, 0.9);
+  vec3 c4 = hsv((h1 + 180.0) / 360.0, 0.8 * colorIntensity, 0.85);
+  
+  // === SYNTHWAVE CRYSTAL SPIRES (seed-controlled) ===
+  float spireVis = spireIntensity + 0.1 * sent; // market influences
+  for(int i = 0; i < 6; i++) {
+    if(float(i) >= spireCount) break;
+    float fi = float(i);
+    float ss = spireSeeds[i]; // unique seed per spire
+    float spireX = (H(vec2(ss, 77.0)) - 0.5) * 2.2;
+    float spireWidth = 0.03 + H(vec2(ss, 78.0)) * 0.06;
+    float spireHeight = 0.3 + H(vec2(ss, 79.0)) * 0.5;
+    float spireBase = -0.9;
+    
+    // Jagged crystal shape
+    float inSpire = step(abs(p.x - spireX), spireWidth * (1.0 - (p.y - spireBase) / spireHeight));
+    inSpire *= step(spireBase, p.y) * step(p.y, spireBase + spireHeight);
+    
+    if(inSpire > 0.5) {
+      // Crystal facet shading
+      float facet = floor((p.y - spireBase) / 0.08);
+      float shade = 0.4 + 0.3 * H(vec2(ss, facet));
+      vec3 spireCol = mix(c1, c2, H(vec2(ss, 80.0))) * shade * spireVis;
+      
+      // Wireframe edge highlight
+      float edgeDist = abs(abs(p.x - spireX) - spireWidth * (1.0 - (p.y - spireBase) / spireHeight));
+      if(edgeDist < pxSize * 2.0) {
+        spireCol = c1 * 0.8;
+      }
+      col = max(col, spireCol);
+    }
+  }
+  
+  // === HORIZON WIREFRAME GRID (seed-controlled) ===
+  if(gridIntensity > 0.02) {
+    float gridY = -0.5;
+    if(p.y < gridY && p.y > -1.0) {
+      float perspective = 1.0 / (gridY - p.y + 0.1);
+      float gridX = p.x * perspective;
+      float gridZ = perspective * 0.5;
+      
+      // Grid lines
+      float lineX = smoothstep(0.02, 0.0, abs(fract(gridX * 0.8 + t * 0.1) - 0.5) - 0.45);
+      float lineZ = smoothstep(0.02, 0.0, abs(fract(gridZ * 2.0 + t * 0.3) - 0.5) - 0.45);
+      float grid = max(lineX, lineZ) * (gridIntensity + 0.1 * vol);
+      
+      vec3 gridCol = mix(c1, c2, 0.5) * grid * (1.0 - (gridY - p.y) * 0.8);
+      col = max(col, gridCol);
+    }
+  }
+  
+  // === GLITCH DISTORTION ZONES ===
+  for(int c = 0; c < 5; c++) {
+    if(float(c) >= clusters) break;
+    float ps = primSeeds[c];
+    
+    // Zone center - randomized position
+    vec2 center = vec2(
+      H(vec2(ps, 1.0)) * 2.0 - 1.0,
+      H(vec2(ps, 2.0)) * 2.0 - 1.0
+    ) * 0.7;
+    
+    float dist = length(p - center);
+    float zoneSize = 0.15 + H(vec2(ps, 3.0)) * 0.25;
+    
+    // Inside the distortion zone
+    if(dist < zoneSize) {
+      float zoneFade = 1.0 - dist / zoneSize;
+      float zoneType = H(vec2(ps, 4.0));
+      
+      // Pick zone color
+      vec3 zoneCol;
+      float colSel = H(vec2(ps, 5.0));
+      if(colSel < 0.25) zoneCol = c1;
+      else if(colSel < 0.5) zoneCol = c2;
+      else if(colSel < 0.75) zoneCol = c3;
+      else zoneCol = c4;
+      
+      if(zoneType < 0.33) {
+        // Horizontal scan distortion - shifts pixels horizontally
+        float scanY = floor((p.y - center.y + zoneSize) / (pxSize * 3.0));
+        float shift = (H(vec2(scanY, ps)) - 0.5) * 0.15 * zoneFade;
+        float scanRand = H(vec2(pxCoord.x + shift * 100.0, scanY + ps));
+        if(scanRand < 0.6 * zoneFade) {
+          col = mix(col, zoneCol, 0.7 * zoneFade);
+        }
+      } else if(zoneType < 0.66) {
+        // Pixel scatter - random pixels within zone
+        float pxRand = H(pxCoord + ps);
+        if(pxRand < 0.4 * zoneFade * zoneFade) {
+          float bright = 0.6 + H(pxCoord + ps + 100.0) * 0.5;
+          col = zoneCol * bright;
+        }
+      } else {
+        // Color bleed - soft color wash
+        col = mix(col, zoneCol * 0.7, zoneFade * 0.5);
+        // Add some pixel noise on top - STABILIZED: fixed pattern, pulsing visibility
+        float noiseRand = H(pxCoord + ps * 10.0 + 22.0);
+        float noisePulse = sin(t * 2.0 + ps) * 0.5 + 0.5;
+        if(noiseRand < 0.15 * zoneFade * noisePulse) {
+          col = zoneCol;
+        }
+      }
+    }
+  }
+  
+  // === SCATTERED NOISE PIXELS - STABILIZED: fixed pattern, smooth brightness ===
+  float noiseRand = H(pxCoord + 33.0);
+  float noiseBright = 0.5 + 0.3 * sin(t * 1.5 + pxCoord.x * 0.1 + pxCoord.y * 0.1);
+  if(noiseRand < scatter * 0.15) {
+    float colSel = H(pxCoord + 500.0);
+    if(colSel < 0.5) col = c1 * noiseBright;
+    else col = c2 * noiseBright;
+  }
+  
+  // === RECTANGULAR GLITCH OUTLINES === (disabled)
+  // for(int i = 0; i < 6; i++) { ... }
+  
+  // === SYNTHWAVE BAND GLITCHES (chunky horizontal tears) - STABILIZED: fixed presence, animated opacity ===
+  if(bandGlitch > 0.05) {
+    for(int b = 0; b < 4; b++) {
+      float fb = float(b);
+      // FIXED seed - bands always present based on seed, not time
+      float bandSeed = H(vec2(fb + 20.0, 99.0));
+      // Smooth opacity pulsing instead of random appearance
+      float bandOpacity = 0.5 + 0.5 * sin(t * 0.5 + fb * 2.0);
+      if(bandSeed > 1.0 - bandGlitch - vol * 0.1) {
+        float bandY = (H(vec2(fb, 30.0)) - 0.5) * 1.8;
+        float bandH = 0.02 + H(vec2(fb, 31.0)) * 0.06;
+        
+        if(abs(p.y - bandY) < bandH) {
+          float bandShift = (H(vec2(fb, 32.0)) - 0.5) * 0.3;
+          float bandRand = H(pxCoord + vec2(bandShift * 100.0, fb));
+          
+          // Chunky color bands with smooth opacity animation
+          if(bandRand < 0.5) {
+            col = mix(col, c1 * 0.9, 0.7 * bandOpacity);
+          } else if(bandRand < 0.7) {
+            col = mix(col, c3 * 0.8, 0.5 * bandOpacity);
+          }
+        }
+      }
+    }
+  }
+  
+  // === HORIZONTAL GLITCH DISPLACEMENT - STABILIZED: smoother cycling ===
+  float glitchCycle = sin(t * 0.3) * 0.5 + 0.5; // slow smooth cycle
+  float hGlitchLine = step(0.92 - vol * 0.05, H(vec2(pxCoord.y, 50.0)));
+  if(hGlitchLine > 0.5) {
+    float shiftAmt = (H(vec2(pxCoord.y + 1.0, 50.0)) - 0.5) * 20.0 * glitchCycle;
+    vec2 shiftCoord = pxCoord + vec2(shiftAmt, 0.0);
+    float shiftRand = H(shiftCoord + 100.0);
+    if(shiftRand < density * 0.8) {
+      col = mix(c1, c2, H(shiftCoord + 100.0));
+    }
+  }
+  
+  // === BLOCK DISPLACEMENT - STABILIZED: fixed blocks, smooth intensity ===
+  vec2 blockCoord = floor(uv * 8.0);
+  float blockGlitch = step(0.88 - vol * 0.08, H(blockCoord + 55.0)); // fixed seed
+  float blockIntensity = 0.5 + 0.5 * sin(t * 0.4 + blockCoord.x + blockCoord.y); // smooth pulse
+  if(blockGlitch > 0.5) {
+    vec2 blockShift = (vec2(H(blockCoord + 10.0), H(blockCoord.yx + 10.0)) - 0.5) * 0.1;
+    vec2 newPxCoord = floor((uv + blockShift * blockIntensity) * res.x / pixelSize);
+    float bRand = H(newPxCoord + 200.0);
+    if(bRand < 0.5) {
+      col = mix(col, c1, 0.7 * blockIntensity);
+    } else if(bRand < 0.7) {
+      col = mix(col, c3, 0.6 * blockIntensity);
+    }
+  }
+  
+  // === RGB CHANNEL SPLIT ===
+  float rgbSplit = glitchAmt * 0.02 * (1.0 + vol);
+  vec2 rCoord = floor((uv + vec2(rgbSplit, 0.0)) * res.x / pixelSize);
+  vec2 bCoord = floor((uv - vec2(rgbSplit, 0.0)) * res.x / pixelSize);
+  
+  // STABILIZED: smooth cycling instead of time-based jumps
+  float rgbCycle = sin(t * 0.5) * 0.5 + 0.5;
+  float rShift = H(rCoord + 77.0) * rgbCycle;
+  float bShift = H(bCoord + 77.0) * rgbCycle;
+  
+  if(rShift < density * 0.5 && col.r < 0.1) col.r += c1.r * 0.6;
+  if(bShift < density * 0.5 && col.b < 0.1) col.b += c2.b * 0.5;
+  
+  // === SCANLINE GLITCH ===
+  float scanGlitch = step(0.95, sin(puv.y * 300.0 + t * 50.0));
+  col = mix(col, col.gbr, scanGlitch * 0.5);
+  
+  // === PIXEL DROPOUT - STABILIZED: fixed pattern with smooth flicker ===
+  float dropoutFlicker = sin(t * 3.0) * 0.5 + 0.5;
+  float dropout = step(0.97, H(pxCoord + 88.0));
+  if(dropout > 0.5 && dropoutFlicker > 0.7 && length(col) > 0.1) {
+    col = vec3(0.0);
+  }
+  
+  // === FRAME CORRUPTION BLOCKS - STABILIZED: fixed blocks, smooth transition ===
+  vec2 corruptBlock = floor(uv * 5.0);
+  float corrupt = step(0.93 - vol * 0.05, H(corruptBlock + 44.0));
+  float corruptCycle = sin(t * 0.25 + corruptBlock.x) * 0.5 + 0.5;
+  if(corrupt > 0.5 && corruptCycle > 0.6) {
+    col = mix(col, col.brg, corruptCycle);
+  }
+  
+  // === STATIC NOISE BURST - STABILIZED: rare, smooth fade ===
+  float staticCycle = sin(t * 0.15) * 0.5 + 0.5;
+  if(staticCycle > 0.9) {
+    float staticPx = H(pxCoord + 200.0);
+    if(staticPx > 0.8) col = mix(col, vec3(staticPx * 0.5), (staticCycle - 0.9) * 10.0);
+  }
+  
+  // === AURORA COLOR CURTAINS (vertical color bleed) ===
+  if(auroraAmt > 0.02) {
+    for(int a = 0; a < 5; a++) {
+      float fa = float(a);
+      float curtainX = (H(vec2(fa, 200.0)) - 0.5) * 2.5;
+      float curtainW = 0.1 + H(vec2(fa, 201.0)) * 0.3;
+      float curtainDist = abs(p.x - curtainX);
+      
+      if(curtainDist < curtainW) {
+        float curtainFade = 1.0 - curtainDist / curtainW;
+        curtainFade *= curtainFade;
+        
+        // Vertical color gradient
+        float gradPos = p.y * 0.5 + 0.5 + sin(t * 0.1 + fa) * 0.2;
+        vec3 curtainCol = mix(c1, c2, gradPos);
+        curtainCol = mix(curtainCol, c3, sin(gradPos * PI) * 0.5);
+        
+        col = mix(col, curtainCol, curtainFade * auroraAmt * 0.6);
+      }
+    }
+  }
+  
+  // === VERTICAL DRIP STREAKS (pixel sort style) ===
+  if(dripIntensity > 0.02) {
+    float dripX = floor(puv.x * 60.0);
+    float dripSeed = H(vec2(dripX, 300.0));
+    
+    if(dripSeed < dripIntensity) {
+      float dripStart = (H(vec2(dripX, 301.0)) - 0.3) * 1.5;
+      float dripLen = 0.2 + H(vec2(dripX, 302.0)) * 0.6;
+      float dripSpeed = 0.1 + H(vec2(dripX, 303.0)) * 0.2;
+      
+      float dripY = mod(dripStart - t * dripSpeed, 2.5) - 0.5;
+      
+      if(p.y < dripY && p.y > dripY - dripLen) {
+        float dripFade = (dripY - p.y) / dripLen;
+        vec3 dripCol = mix(c1, c2, H(vec2(dripX, 304.0)));
+        dripCol *= 0.7 + 0.3 * dripFade;
+        col = mix(col, dripCol, (1.0 - dripFade) * 0.7);
+      }
+    }
+  }
+  
+  // === RIPPLE WAVE TEXTURE ===
+  if(rippleAmt > 0.02) {
+    float ripple = sin(p.x * 25.0 + p.y * 8.0 + t * 0.5) * 
+                   sin(p.y * 15.0 - p.x * 5.0 + t * 0.3);
+    ripple = ripple * 0.5 + 0.5;
+    
+    // Fingerprint-like whorls
+    float whorl = sin(length(p - vec2(0.3, 0.2)) * 30.0 - t * 0.2) * 
+                  sin(atan(p.y - 0.2, p.x - 0.3) * 8.0 + t * 0.1);
+    whorl = whorl * 0.5 + 0.5;
+    
+    float pattern = mix(ripple, whorl, 0.3);
+    vec3 rippleCol = mix(c2, c3, pattern);
+    col = mix(col, rippleCol, pattern * rippleAmt * 0.4);
+  }
+  
+  // === HORIZONTAL PIXEL SORT STREAKS ===
+  if(hSortAmt > 0.02) {
+    float sortY = floor(puv.y * 40.0);
+    float sortSeed = H(vec2(sortY, 400.0));
+    
+    if(sortSeed < hSortAmt) {
+      float sortDir = H(vec2(sortY, 401.0)) < 0.5 ? 1.0 : -1.0;
+      float sortSpeed = 0.2 + H(vec2(sortY, 402.0)) * 0.4;
+      float sortPhase = fract(t * sortSpeed * sortDir + H(vec2(sortY, 403.0)));
+      
+      // Stretch colors horizontally
+      float stretchX = sortPhase * 2.0 - 1.0;
+      vec3 sortCol = mix(c1, c2, H(vec2(sortY, 404.0)));
+      sortCol = mix(sortCol, c3, abs(stretchX));
+      
+      float sortFade = 1.0 - abs(stretchX);
+      col = mix(col, sortCol * 0.8, sortFade * 0.6 * hSortAmt);
+    }
+  }
+  
+  // === SHARP DATA BLOCKS === (disabled)
+  // for(int db = 0; db < 5; db++) { ... }
+  
+  // === RADIAL CHROMATIC ABERRATION ===
+  if(chromaAmt > 0.02) {
+    vec2 center = vec2(0.0);
+    vec2 dir = p - center;
+    float dist = length(dir);
+    vec2 offset = normalize(dir) * dist * chromaAmt * 0.08;
+    
+    // Sample offset positions for RGB
+    vec2 rPos = p + offset;
+    vec2 bPos = p - offset;
+    
+    // Create chromatic fringe based on position
+    float rFringe = H(floor(rPos * 30.0 + vec2(t * 2.0, 0.0)));
+    float bFringe = H(floor(bPos * 30.0 - vec2(t * 2.0, 0.0)));
+    
+    col.r = mix(col.r, c1.r * rFringe, dist * chromaAmt * 0.5);
+    col.b = mix(col.b, c2.b * bFringe, dist * chromaAmt * 0.5);
+  }
+  
+  // === CRT SCANLINES ===
+  if(crtAmt > 0.02) {
+    float scanline = sin(puv.y * res.y * 1.5) * 0.5 + 0.5;
+    scanline = pow(scanline, 1.5);
+    col *= 1.0 - scanline * crtAmt * 0.4;
+    
+    // CRT RGB subpixels
+    float subpixel = mod(floor(puv.x * res.x), 3.0);
+    if(subpixel < 1.0) col.gb *= 1.0 - crtAmt * 0.15;
+    else if(subpixel < 2.0) col.rb *= 1.0 - crtAmt * 0.15;
+    else col.rg *= 1.0 - crtAmt * 0.15;
+    
+    // CRT curve vignette
+    vec2 crtUV = puv * 2.0 - 1.0;
+    float crtVig = 1.0 - dot(crtUV * crtUV, crtUV * crtUV) * crtAmt * 0.3;
+    col *= crtVig;
+  }
+  
+  // === EDGE GLOW ===
+  if(edgeGlow > 0.02) {
+    float lum = dot(col, vec3(0.299, 0.587, 0.114));
+    float glow = smoothstep(0.2, 0.6, lum);
+    vec3 glowCol = mix(c1, c2, glow);
+    col += glowCol * glow * edgeGlow * 0.5;
+  }
+  
+  // === POSTERIZE ===
+  if(posterize > 1.0) {
+    col = floor(col * posterize + 0.5) / posterize;
+  }
+  
+  // === INVERT ===
+  if(invertAmt > 0.02) {
+    col = mix(col, vec3(1.0) - col, invertAmt);
+  }
+  
+  // === LIGHTNING BOLTS (void style) - STABILIZED: fixed positions, animated intensity ===
+  if(lightningAmt > 0.1) {
+    for(int bolt = 0; bolt < 6; bolt++) {
+      float fbolt = float(bolt);
+      float boltSeed = boltSeeds[bolt];
+      
+      // FIXED positions based on seed only (no time-based repositioning)
+      vec2 start = vec2(
+        H(vec2(boltSeed, 710.0)) * 2.0 - 1.0,
+        H(vec2(boltSeed, 711.0)) * 2.0 - 1.0
+      );
+      vec2 end = vec2(
+        H(vec2(boltSeed + 100.0, 712.0)) * 2.0 - 1.0,
+        H(vec2(boltSeed + 100.0, 713.0)) * 2.0 - 1.0
+      );
+      
+      // Smooth pulsing intensity instead of random flicker
+      float boltActive = (0.5 + 0.5 * sin(t * 2.0 + fbolt * 1.5)) * lightningAmt;
+      
+      // Pick bolt color from palette
+      vec3 boltColor = c1;
+      float colPick = H(vec2(boltSeed, 820.0));
+      if(colPick < 0.25) boltColor = c1;
+      else if(colPick < 0.5) boltColor = c2;
+      else if(colPick < 0.75) boltColor = c3;
+      else boltColor = mix(c1, c2, 0.5);
+      
+      // Endpoint pulse effects
+      float pulseTime = fract(t * 3.0 + fbolt * 0.2);
+      float pulseWave = sin(pulseTime * 6.28) * 0.5 + 0.5;
+      
+      // Start point pulse
+      float startDist = length(p - start);
+      float startPulse = (0.12 * pulseWave + 0.05) / (startDist + 0.015) * boltActive;
+      col += boltColor * startPulse * 0.125;
+      
+      // Radiating rings from start
+      float startRing = abs(fract(startDist * 6.0 - t * 2.5) - 0.5);
+      startRing = smoothstep(0.15, 0.0, startRing) * smoothstep(0.4, 0.0, startDist);
+      col += boltColor * startRing * 0.15 * boltActive;
+      
+      // End point pulse
+      float endDist = length(p - end);
+      float endPulse = (0.1 * pulseWave + 0.04) / (endDist + 0.015) * boltActive;
+      col += boltColor * endPulse * 0.1;
+      
+      // Radiating rings from end
+      float endRing = abs(fract(endDist * 6.0 - t * 2.5 + 0.5) - 0.5);
+      endRing = smoothstep(0.15, 0.0, endRing) * smoothstep(0.35, 0.0, endDist);
+      col += boltColor * endRing * 0.125 * boltActive;
+      
+      // Jagged bolt segments
+      for(int seg = 0; seg < 10; seg++) {
+        float fseg = float(seg);
+        float t1 = fseg / 10.0;
+        float t2 = (fseg + 1.0) / 10.0;
+        
+        // STABILIZED: fixed jagged shape based on seed, slight smooth wobble
+        float jag1 = (H(vec2(boltSeed + fseg, 600.0)) - 0.5) * 0.25 + sin(t * 1.5 + fseg) * 0.02;
+        float jag2 = (H(vec2(boltSeed + fseg + 1.0, 600.0)) - 0.5) * 0.25 + sin(t * 1.5 + fseg + 1.0) * 0.02;
+        
+        vec2 p1 = mix(start, end, t1);
+        vec2 p2 = mix(start, end, t2);
+        
+        vec2 dir = end - start;
+        float dirLen = length(dir);
+        if(dirLen > 0.01) {
+          dir = dir / dirLen;
+          vec2 perp = vec2(-dir.y, dir.x);
+          p1 += perp * jag1;
+          p2 += perp * jag2;
+        }
+        
+        // Distance to segment
+        vec2 pa = p - p1;
+        vec2 ba = p2 - p1;
+        float baLen = dot(ba, ba);
+        float hh = 0.0;
+        if(baLen > 0.0001) hh = clamp(dot(pa, ba) / baLen, 0.0, 1.0);
+        float segDist = length(pa - ba * hh);
+        
+        // Outer glow
+        float outerGlow = 0.012 / (segDist + 0.008) * boltActive;
+        col += boltColor * outerGlow * 0.175;
+        
+        // Inner glow
+        float innerGlow = 0.006 / (segDist + 0.003) * boltActive;
+        col += boltColor * innerGlow * 0.25;
+        
+        // Core (bright line)
+        float coreVis = step(segDist, 0.00375) * boltActive;
+        col = mix(col, boltColor + vec3(0.5), coreVis * 0.9);
+      }
+    }
+  }
+  
+  // === PREMIUM FINISHING EFFECTS (elegant brutalist) ===
+  
+  // Subtle metallic shimmer on bright areas
+  float lum = dot(col, vec3(0.299, 0.587, 0.114));
+  float shimmer = sin(p.x * 80.0 + p.y * 40.0 + t * 0.3) * 0.5 + 0.5;
+  shimmer *= sin(p.x * 30.0 - p.y * 60.0 + t * 0.2) * 0.5 + 0.5;
+  vec3 goldTint = vec3(1.0, 0.85, 0.6);
+  col = mix(col, col * goldTint, shimmer * lum * 0.06);
+  
+  // Restrained bloom (less intense)
+  float bloom = smoothstep(0.6, 0.95, lum);
+  col += col * bloom * 0.08;
+  
+  // Film-like lift (subtle light in shadows)
+  col = mix(vec3(0.02, 0.015, 0.025), col, 0.97 + lum * 0.03);
+  
+  // Refined organic grain (film-like, not digital)
+  float grain1 = H(pxCoord + floor(t * 30.0)) * 2.0 - 1.0;
+  float grain2 = H(pxCoord.yx + floor(t * 25.0 + 100.0)) * 2.0 - 1.0;
+  float organicGrain = (grain1 + grain2 * 0.5) * 0.67;
+  col += organicGrain * grainAmt * 0.7;
+  
+  // Gallery vignette (softer falloff, elegant framing)
+  vec2 vigUV = uv - 0.5;
+  float vigDist = length(vigUV * vec2(1.0, 0.95));  // slight vertical stretch
+  float vig = 1.0 - smoothstep(0.4, 0.85, vigDist) * 0.45;
+  col *= vig;
+  
+  // Subtle inner glow (light emanating from center)
+  float innerGlow = 1.0 - smoothstep(0.0, 0.6, vigDist);
+  col += col * innerGlow * 0.06;
+  
+  // Higher quality color (smoother gradients, 12-bit feel)
+  col = floor(col * 32.0 + 0.5) / 32.0;
+  
+  // Apply brightness
+  col *= brightness;
+  
+  // Brutalist contrast: darken midtones, prevent blown whites
+  col = pow(col, vec3(1.08));  // slight darkening curve
+  
+  // Hard cap on brightness - no blown out whites
+  col = min(col, vec3(0.92));
+  
+  // Final subtle contrast enhancement
+  col = smoothstep(0.0, 1.0, col);
+  
+  col = clamp(col, 0.0, 1.0);
+  
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+const vs = gl.createShader(gl.VERTEX_SHADER);
+gl.shaderSource(vs, VS); gl.compileShader(vs);
+const fs = gl.createShader(gl.FRAGMENT_SHADER);
+gl.shaderSource(fs, FS); gl.compileShader(fs);
+if(!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(fs));
+
+const prog = gl.createProgram();
+gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+
+const pLoc = gl.getAttribLocation(prog, 'p');
+const U = n => gl.getUniformLocation(prog, n);
+const unis = {t:U('t'),res:U('res'),h1:U('h1'),h2:U('h2'),h3:U('h3'),
+  clusters:U('clusters'),density:U('density'),pixelSize:U('pixelSize'),
+  scatter:U('scatter'),glitchAmt:U('glitchAmt'),rectGlitch:U('rectGlitch'),
+  diagStreak:U('diagStreak'),sent:U('sent'),vol:U('vol'),
+  spireCount:U('spireCount'),spireIntensity:U('spireIntensity'),
+  gridIntensity:U('gridIntensity'),horizonGlow:U('horizonGlow'),bandGlitch:U('bandGlitch'),
+  spireSeeds:U('spireSeeds'),dripIntensity:U('dripIntensity'),rippleAmt:U('rippleAmt'),
+  auroraAmt:U('auroraAmt'),grainAmt:U('grainAmt'),chromaAmt:U('chromaAmt'),
+  hSortAmt:U('hSortAmt'),marbleAmt:U('marbleAmt'),mirrorAmt:U('mirrorAmt'),
+  dataBlocks:U('dataBlocks'),blockSeeds:U('blockSeeds'),crtAmt:U('crtAmt'),
+  vhsAmt:U('vhsAmt'),posterize:U('posterize'),geoShapes:U('geoShapes'),
+  edgeGlow:U('edgeGlow'),noiseWarp:U('noiseWarp'),invertAmt:U('invertAmt'),
+  shapeSeeds:U('shapeSeeds'),isoCubes:U('isoCubes'),isoSize:U('isoSize'),
+  isoRgbSplit:U('isoRgbSplit'),cubeSeeds:U('cubeSeeds'),primSeeds:U('primSeeds'),
+  lightningAmt:U('lightningAmt'),boltSeeds:U('boltSeeds'),
+  zoneOffsetX:U('zoneOffsetX'),zoneOffsetY:U('zoneOffsetY'),bgGradientAngle:U('bgGradientAngle'),bgNoiseScale:U('bgNoiseScale'),
+  colorIntensity:U('colorIntensity'),brightness:U('brightness'),bgType:U('bgType')};
+
+canvas.width = 1000; canvas.height = 1000;
+gl.viewport(0, 0, 1000, 1000);
+
+function render(time) {
+  time *= 0.005; // 5x faster for seizure-like glitch
+  gl.useProgram(prog);
+  gl.enableVertexAttribArray(pLoc);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
+  
+  gl.uniform1f(unis.t, time);
+  gl.uniform2f(unis.res, 1000, 1000);
+  gl.uniform1f(unis.h1, C.h1);
+  gl.uniform1f(unis.h2, C.h2);
+  gl.uniform1f(unis.h3, C.h3);
+  gl.uniform1f(unis.clusters, C.clusters);
+  gl.uniform1f(unis.density, C.density);
+  gl.uniform1f(unis.pixelSize, C.pixelSize * 0.8);  // 20% less pixelated
+  gl.uniform1f(unis.scatter, C.scatter);
+  gl.uniform1f(unis.glitchAmt, C.glitchAmt);
+  gl.uniform1f(unis.rectGlitch, C.rectGlitch);
+  gl.uniform1f(unis.diagStreak, C.diagStreak);
+  gl.uniform1f(unis.sent, M.sent);
+  gl.uniform1f(unis.vol, M.vol);
+  gl.uniform1f(unis.spireCount, C.spireCount);
+  gl.uniform1f(unis.spireIntensity, C.spireIntensity);
+  gl.uniform1f(unis.gridIntensity, C.gridIntensity);
+  gl.uniform1f(unis.horizonGlow, C.horizonGlow);
+  gl.uniform1f(unis.bandGlitch, C.bandGlitch);
+  gl.uniform1fv(unis.spireSeeds, C.spireSeeds);
+  gl.uniform1f(unis.dripIntensity, C.dripIntensity);
+  gl.uniform1f(unis.rippleAmt, C.rippleAmt);
+  gl.uniform1f(unis.auroraAmt, C.auroraAmt);
+  gl.uniform1f(unis.grainAmt, C.grainAmt);
+  gl.uniform1f(unis.chromaAmt, C.chromaAmt);
+  gl.uniform1f(unis.hSortAmt, C.hSortAmt);
+  gl.uniform1f(unis.marbleAmt, C.marbleAmt);
+  gl.uniform1f(unis.mirrorAmt, C.mirrorAmt);
+  gl.uniform1f(unis.dataBlocks, C.dataBlocks);
+  gl.uniform1fv(unis.blockSeeds, C.blockSeeds);
+  gl.uniform1f(unis.crtAmt, C.crtAmt);
+  gl.uniform1f(unis.vhsAmt, C.vhsAmt);
+  gl.uniform1f(unis.posterize, C.posterize);
+  gl.uniform1f(unis.geoShapes, C.geoShapes);
+  gl.uniform1f(unis.edgeGlow, C.edgeGlow);
+  gl.uniform1f(unis.noiseWarp, C.noiseWarp);
+  gl.uniform1f(unis.invertAmt, C.invertAmt);
+  gl.uniform1fv(unis.shapeSeeds, C.shapeSeeds);
+  gl.uniform1f(unis.isoCubes, C.isoCubes);
+  gl.uniform1f(unis.isoSize, C.isoSize);
+  gl.uniform1f(unis.isoRgbSplit, C.isoRgbSplit);
+  gl.uniform1fv(unis.cubeSeeds, C.cubeSeeds);
+  gl.uniform1fv(unis.primSeeds, C.primSeeds);
+  gl.uniform1f(unis.lightningAmt, C.lightningAmt);
+  gl.uniform1fv(unis.boltSeeds, C.boltSeeds);
+  gl.uniform1f(unis.zoneOffsetX, C.zoneOffsetX);
+  gl.uniform1f(unis.zoneOffsetY, C.zoneOffsetY);
+  gl.uniform1f(unis.bgGradientAngle, C.bgGradientAngle);
+  gl.uniform1f(unis.bgNoiseScale, C.bgNoiseScale);
+  gl.uniform1f(unis.colorIntensity, C.colorIntensity);
+  gl.uniform1f(unis.brightness, C.brightness);
+  gl.uniform1i(unis.bgType, C.bgType === 'gradient' ? 1 : (C.bgType === 'textured' ? 2 : 0));
+  
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  requestAnimationFrame(render);
+}
+render(0);
+
+// Only enable controls if NOT a minted piece
+if (!isMinted) {
+  document.getElementById('randomize').onclick = () => { gen(Math.floor(Math.random() * 100000)); history.replaceState({}, '', '?seed=' + seed); };
+  document.getElementById('save').onclick = () => { const a = document.createElement('a'); a.download = 'vector-dream-' + seed + '.png'; a.href = canvas.toDataURL('image/png'); a.click(); };
+  document.onkeydown = e => { if(e.code === 'Space') { e.preventDefault(); document.getElementById('randomize').click(); }};
+}
+</script>
+</body>
+</html>
