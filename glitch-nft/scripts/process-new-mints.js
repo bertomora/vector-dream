@@ -12,7 +12,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const CONTRACT = '0xbae88927f84adc3a16aa3a41340631f5f285fa0a';
 const RPC = 'https://mainnet.base.org';
-const ART_URL = 'https://arweave.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8';
+const ART_URL = 'https://ar-io.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8';
 const PROCESSED_FILE = path.join(__dirname, '..', '.processed-mints.json');
 const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY || '';
 
@@ -125,7 +125,7 @@ async function main() {
         ]
       });
       
-      const arweaveUrl = `https://arweave.net/${receipt.id}`;
+      const arweaveUrl = `https://ar-io.net/${receipt.id}`;
       console.log(`  ✅ Uploaded: ${arweaveUrl}`);
       
       // Save to processed
