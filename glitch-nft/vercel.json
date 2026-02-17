@@ -3,5 +3,5 @@
   "outputDirectory": ".",
   "cleanUrls": false,
   "trailingSlash": false,
-  "alias": ["vector-dreamz.vercel.app"]
+  "alias": ["vector-dreamz.vercel.app", "vector-dream.vercel.app"]
 }
