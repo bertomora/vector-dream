@@ -104,12 +104,13 @@
             flex-shrink: 0;
         }
         
-        /* Center controls between blocks */
-        .center-controls {
+        /* Bottom controls */
+        .bottom-controls {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            gap: 15px;
             align-items: center;
+            justify-content: center;
+            margin-top: 30px;
         }
         
         .art-frame {
@@ -128,15 +129,14 @@
             border: none;
         }
         
-        .center-controls .btn-gen {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            padding: 30px 14px;
-            font-size: 0.85rem;
+        .bottom-controls .btn-gen {
+            padding: 16px 50px;
+            font-size: 1rem;
         }
         
-        .center-controls .btn-nav {
-            padding: 12px 14px;
+        .bottom-controls .btn-nav {
+            padding: 16px 22px;
+            font-size: 1rem;
         }
         
         .btn-gen {
@@ -408,14 +408,8 @@
             .art-section { width: 100%; max-width: 450px; }
             .mint-panel { width: 100%; max-width: 450px; height: auto; }
             
-            .center-controls {
-                flex-direction: row;
-                gap: 12px;
-            }
-            
-            .center-controls .btn-gen {
-                writing-mode: horizontal-tb;
-                padding: 14px 30px;
+            .bottom-controls {
+                margin-top: 20px;
             }
         }
         
@@ -451,12 +445,6 @@
                 <div class="art-frame">
                     <iframe id="preview" src="art.html"></iframe>
                 </div>
-            </div>
-            
-            <div class="center-controls">
-                <button class="btn-nav" id="btn-back" disabled>◀</button>
-                <button class="btn-gen" onclick="generate()">Generate New</button>
-                <button class="btn-nav" id="btn-forward" disabled>▶</button>
             </div>
             
             <div class="mint-panel">
@@ -510,6 +498,12 @@
                 
                 <div class="status" id="status"></div>
             </div>
+        </div>
+        
+        <div class="bottom-controls">
+            <button class="btn-nav" id="btn-back" disabled>◀</button>
+            <button class="btn-gen" onclick="generate()">Generate New</button>
+            <button class="btn-nav" id="btn-forward" disabled>▶</button>
         </div>
     </div>
 
