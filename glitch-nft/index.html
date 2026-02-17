@@ -320,85 +320,53 @@
             animation: glowPulse 2s ease infinite;
         }
         
-        /* Desktop layout - side by side with bigger art */
-        @media (min-width: 900px) {
+        /* Desktop - elegant centered layout */
+        @media (min-width: 768px) {
             .main {
-                flex-direction: row;
-                max-width: 1400px;
-                padding: 20px 40px;
-                gap: 40px;
+                max-width: 600px;
+                padding: 30px 20px;
+                justify-content: center;
+                min-height: 100vh;
             }
             
             .preview-side {
-                flex: 1;
-                padding: 20px;
-                justify-content: center;
+                padding: 30px 20px;
             }
             
             .preview-wrap {
-                width: min(100%, 70vh);
-                height: auto;
-                max-width: 600px;
-                max-height: none;
-                aspect-ratio: 1;
+                width: min(480px, 55vh);
+                max-width: 480px;
             }
             
             .btn-generate {
                 margin-top: 25px;
-                padding: 15px 50px;
+                padding: 16px 50px;
                 font-size: 1rem;
             }
             
             .mint-side {
-                width: 360px;
-                flex-shrink: 0;
-                border-top: none;
-                border-left: 1px solid rgba(120, 115, 245, 0.3);
-                padding: 30px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+                padding: 30px 20px;
             }
             
-            .logo { margin-bottom: 25px; }
-            .logo h1 { font-size: 1.8rem; }
-            .logo .sub { font-size: 0.65rem; margin-top: 5px; }
-            
-            .badges { margin-bottom: 15px; }
-            .badge { padding: 6px 12px; font-size: 0.7rem; }
-            
-            .description { font-size: 0.7rem; margin-bottom: 20px; }
-            
-            .stats { padding: 15px; margin-bottom: 20px; }
-            .stat-row { padding: 10px 0; font-size: 0.85rem; }
-            .stat-label { font-size: 0.7rem; }
-            
-            .btn { padding: 16px; font-size: 0.85rem; margin-bottom: 10px; }
-            
-            .wallet-info { padding: 12px; font-size: 0.75rem; margin-bottom: 15px; }
-            
-            .mint-note { font-size: 0.65rem; margin-top: 15px; }
-            .footer { padding-top: 15px; }
-            .footer a { font-size: 0.65rem; margin: 0 8px; }
+            .logo h1 { font-size: 1.6rem; }
+            .description { font-size: 0.65rem; max-width: 450px; margin-left: auto; margin-right: auto; }
+            .stats { max-width: 350px; margin-left: auto; margin-right: auto; }
+            .wallet-section { max-width: 320px; margin-left: auto; margin-right: auto; }
         }
         
-        /* Large desktop - even bigger art */
-        @media (min-width: 1200px) {
+        /* Large desktop - bigger art */
+        @media (min-width: 1100px) {
             .main {
-                padding: 30px 60px;
-                gap: 60px;
-            }
-            
-            .preview-wrap {
-                max-width: min(100%, 75vh);
-            }
-            
-            .mint-side {
-                width: 400px;
+                max-width: 700px;
                 padding: 40px;
             }
             
-            .logo h1 { font-size: 2rem; }
+            .preview-wrap {
+                width: min(550px, 60vh);
+                max-width: 550px;
+            }
+            
+            .logo h1 { font-size: 1.8rem; }
         }
     </style>
 </head>
