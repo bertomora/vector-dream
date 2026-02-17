@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VΞCTOR DRΞΛM</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
-    <link rel="shortcut icon" href="/favicon.svg?v=2">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         
@@ -129,42 +128,6 @@
         .btn-generate:hover {
             transform: scale(1.05);
             box-shadow: 0 0 30px rgba(255, 110, 196, 0.5);
-        }
-        
-        .nav-buttons {
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .nav-buttons .btn-generate {
-            margin-top: 0;
-        }
-        
-        .btn-nav {
-            background: rgba(120, 115, 245, 0.3);
-            border: 1px solid rgba(120, 115, 245, 0.5);
-            padding: 0 20px;
-            font-family: 'Orbitron', monospace;
-            font-size: 1rem;
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .btn-nav:hover:not(:disabled) {
-            background: rgba(120, 115, 245, 0.5);
-            box-shadow: 0 0 20px rgba(120, 115, 245, 0.4);
-        }
-        
-        .btn-nav:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
         }
         
         /* Mint Side */
@@ -427,21 +390,19 @@
         @media (min-width: 900px) {
             .main {
                 flex-direction: row;
-                max-width: 1200px;
+                max-width: 1400px;
                 padding: 20px 40px;
-                gap: 50px;
-                justify-content: center;
-                align-items: center;
+                gap: 40px;
             }
             
             .preview-side {
-                flex: 0 0 auto;
+                flex: 1;
                 padding: 20px;
                 justify-content: center;
             }
             
             .preview-wrap {
-                width: min(55vw, 70vh);
+                width: min(100%, 70vh);
                 height: auto;
                 max-width: 600px;
                 max-height: none;
@@ -517,11 +478,7 @@
                 <div class="preview-glow"></div>
                 <iframe class="preview-frame" id="preview" src="art.html"></iframe>
             </div>
-            <div class="nav-buttons">
-                <button class="btn-nav" onclick="goBack()" id="btn-back" disabled>◀</button>
-                <button class="btn-generate" onclick="generate()">GENERATE</button>
-                <button class="btn-nav" onclick="goForward()" id="btn-forward" disabled>▶</button>
-            </div>
+            <button class="btn-generate" onclick="generate()">⟳ Generate</button>
         </div>
         
         <div class="mint-side">
@@ -542,18 +499,13 @@
             </div>
             
             <p class="description">
-                <strong style="color:#ff6ec4">〔 CREATE YOUR PIECE 〕</strong><br><br>
-                <span style="color:#4ff0ff">►</span> Hit <strong>GENERATE</strong> until you find your vibe<br>
-                <span style="color:#4ff0ff">►</span> Each piece is alive and unique<br>
-                <span style="color:#4ff0ff">►</span> <strong>MINT</strong> to own it forever<br><br>
-                <span style="color:#7873f5">◇ Feeling lucky? Try <strong>RANDOM MINT</strong> ◇</span><br><br>
-                <span style="color:#555">Six styles: Synthwave • Databend • Corrupt • Neon • Isometric • Void (5% rare) — VHS wobble, CRT scanlines, film grain.</span>
+                100 unique vaporwave transmissions born from pure mathematics. Six styles: Synthwave spires, Databend auroras, Corrupt chaos, Neon edge-glow, Isometric geometry, and rare Void lightning. 8 color auras, VHS wobble, CRT scanlines, film grain. Living artifacts from 1984–2001. Each seed mints once. Forever on-chain.
             </p>
             
             <div class="stats">
                 <div class="stat-row">
                     <span class="stat-label">Price</span>
-                    <span class="stat-value" id="price">0.004 ETH</span>
+                    <span class="stat-value" id="price">0.002 ETH</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Minted</span>
@@ -576,13 +528,13 @@
                 </div>
                 
                 <div id="mint-btns" style="display:none;">
-                    <button class="btn btn-mint" id="btn-mint" onclick="mintSeed()" disabled>▶ MINT THIS ONE</button>
-                    <button class="btn btn-mint-random" onclick="mintRandom()">⟐ RANDOM MINT ⟐</button>
+                    <button class="btn btn-mint" id="btn-mint" onclick="mintSeed()" disabled>Mint This Piece</button>
+                    <button class="btn btn-mint-random" onclick="mintRandom()">Mint Random</button>
                 </div>
                 
                 <div class="status" id="status"></div>
                 
-                <div class="mint-note">◈ 100 TOTAL ◈ UNIQUE FOREVER ◈ ON-CHAIN ◈</div>
+                <div class="mint-note">🔒 Each seed minted once. Forever yours.</div>
             </div>
             
             <div class="footer">
@@ -610,10 +562,6 @@
         
         let provider, signer, contract, currentSeed, mintPrice;
         const MAX_SUPPLY = 100;
-        
-        // History tracking
-        let seedHistory = [];
-        let historyIndex = -1;
         
         // Fetch supply on page load (read-only)
         async function fetchSupply() {
@@ -645,60 +593,10 @@
         fetchSupply();
         
         function generate() {
-            // Generate seed that's visually different from last one
-            // Seeds close together often look similar, so ensure at least 5000 apart
-            let newSeed;
-            let attempts = 0;
-            do {
-                newSeed = Math.floor(Math.random() * 99999) + 1;
-                attempts++;
-            } while (currentSeed && Math.abs(newSeed - currentSeed) < 5000 && attempts < 10);
-            
-            // Also avoid seeds in same "style bucket" (every ~16666 seeds = same style)
-            // by adding extra randomization
-            if (currentSeed && Math.floor(newSeed / 16666) === Math.floor(currentSeed / 16666)) {
-                newSeed = (newSeed + 16666 + Math.floor(Math.random() * 50000)) % 99999 + 1;
-            }
-            
-            currentSeed = newSeed;
-            
-            // Add to history (remove any forward history)
-            if (historyIndex < seedHistory.length - 1) {
-                seedHistory = seedHistory.slice(0, historyIndex + 1);
-            }
-            seedHistory.push(currentSeed);
-            historyIndex = seedHistory.length - 1;
-            
-            showSeed(currentSeed);
-            updateNavButtons();
-        }
-        
-        function showSeed(seed) {
-            currentSeed = seed;
-            document.getElementById('preview').src = `art.html?seed=${seed}`;
-            document.getElementById('seed').textContent = seed;
+            currentSeed = Math.floor(Math.random() * 99999) + 1;
+            document.getElementById('preview').src = `art.html?seed=${currentSeed}`;
+            document.getElementById('seed').textContent = currentSeed;
             if (contract) checkSeed();
-        }
-        
-        function goBack() {
-            if (historyIndex > 0) {
-                historyIndex--;
-                showSeed(seedHistory[historyIndex]);
-                updateNavButtons();
-            }
-        }
-        
-        function goForward() {
-            if (historyIndex < seedHistory.length - 1) {
-                historyIndex++;
-                showSeed(seedHistory[historyIndex]);
-                updateNavButtons();
-            }
-        }
-        
-        function updateNavButtons() {
-            document.getElementById('btn-back').disabled = historyIndex <= 0;
-            document.getElementById('btn-forward').disabled = historyIndex >= seedHistory.length - 1;
         }
         
         function isMobile() {
@@ -787,7 +685,7 @@
             if (!contract || !currentSeed) return;
             const available = await contract.isSeedAvailable(currentSeed);
             document.getElementById('btn-mint').disabled = !available;
-            document.getElementById('btn-mint').textContent = available ? '▶ MINT THIS ONE' : '✕ TAKEN — GENERATE AGAIN';
+            document.getElementById('btn-mint').textContent = available ? 'Mint This Piece' : 'Already Minted';
         }
         
         async function mintSeed() {
