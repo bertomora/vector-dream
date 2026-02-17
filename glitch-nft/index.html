@@ -442,24 +442,24 @@
         @media (min-width: 900px) {
             .main {
                 flex-direction: column;
-                max-width: 1200px;
-                padding: 30px 50px;
+                max-width: 1400px;
+                padding: 40px 60px;
             }
             
             .header {
-                padding: 25px 20px;
-                margin-bottom: 30px;
+                padding: 30px 20px;
+                margin-bottom: 40px;
             }
             
-            .header .logo h1 { font-size: 2.5rem; }
-            .header .logo .sub { font-size: 0.85rem; margin-top: 10px; letter-spacing: 4px; }
-            .header .badges { margin: 20px 0; }
-            .header .badge { padding: 10px 20px; font-size: 0.85rem; }
-            .header .description { font-size: 0.85rem; max-width: 700px; margin: 0 auto; line-height: 1.8; }
+            .header .logo h1 { font-size: 3rem; }
+            .header .logo .sub { font-size: 0.9rem; margin-top: 12px; letter-spacing: 5px; }
+            .header .badges { margin: 25px 0; }
+            .header .badge { padding: 12px 24px; font-size: 0.9rem; }
+            .header .description { font-size: 0.9rem; max-width: 800px; margin: 0 auto; line-height: 1.9; }
             
             .content {
                 flex-direction: row;
-                gap: 50px;
+                gap: 80px;
                 justify-content: center;
                 align-items: flex-start;
             }
@@ -470,57 +470,63 @@
             }
             
             .preview-wrap {
-                width: min(45vw, 55vh);
-                max-width: 500px;
+                width: min(55vw, 65vh);
+                max-width: 650px;
             }
             
             .btn-generate {
-                margin-top: 25px;
-                padding: 15px 50px;
-                font-size: 1rem;
+                margin-top: 30px;
+                padding: 18px 60px;
+                font-size: 1.1rem;
             }
             
+            .nav-buttons { gap: 15px; }
+            .btn-nav { padding: 18px 28px; font-size: 1.1rem; }
+            
             .mint-side {
-                width: 380px;
+                width: 400px;
                 flex-shrink: 0;
                 border-left: 1px solid rgba(120, 115, 245, 0.3);
-                padding: 0 0 0 40px;
+                padding: 0 0 0 60px;
                 display: flex;
                 flex-direction: column;
                 justify-content: flex-start;
             }
             
-            .stats { padding: 18px; margin-bottom: 20px; }
-            .stat-row { padding: 12px 0; font-size: 0.95rem; }
-            .stat-label { font-size: 0.8rem; letter-spacing: 2px; }
+            .stats { padding: 22px; margin-bottom: 25px; }
+            .stat-row { padding: 14px 0; font-size: 1rem; }
+            .stat-label { font-size: 0.85rem; letter-spacing: 2px; }
             
-            .btn { padding: 16px; font-size: 0.9rem; margin-bottom: 10px; }
+            .btn { padding: 18px; font-size: 0.95rem; margin-bottom: 12px; }
             
-            .wallet-info { padding: 14px; font-size: 0.85rem; margin-bottom: 15px; }
+            .wallet-info { padding: 16px; font-size: 0.9rem; margin-bottom: 18px; }
             
-            .mint-note { font-size: 0.75rem; margin-top: 15px; }
-            .footer { padding-top: 15px; }
-            .footer a { font-size: 0.75rem; }
-            .footer a { font-size: 0.65rem; margin: 0 8px; }
+            .mint-note { font-size: 0.8rem; margin-top: 20px; }
+            .footer { padding-top: 20px; }
+            .footer a { font-size: 0.8rem; margin: 0 15px; }
         }
         
-        /* Large desktop - even bigger art */
-        @media (min-width: 1200px) {
+        /* Large desktop - even bigger */
+        @media (min-width: 1400px) {
             .main {
-                padding: 30px 60px;
-                gap: 60px;
+                max-width: 1600px;
+                padding: 50px 80px;
             }
             
+            .header { margin-bottom: 50px; }
+            .header .logo h1 { font-size: 3.5rem; }
+            
+            .content { gap: 100px; }
+            
             .preview-wrap {
-                max-width: min(100%, 75vh);
+                width: min(60vw, 70vh);
+                max-width: 750px;
             }
             
             .mint-side {
-                width: 400px;
-                padding: 40px;
+                width: 450px;
+                padding-left: 80px;
             }
-            
-            .logo h1 { font-size: 2rem; }
         }
     </style>
 </head>
