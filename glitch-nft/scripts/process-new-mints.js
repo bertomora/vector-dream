@@ -137,8 +137,7 @@ async function main() {
       };
       fs.writeFileSync(PROCESSED_FILE, JSON.stringify(processed, null, 2));
       
-      // Refresh OpenSea metadata
-      await refreshOpenSeaMetadata(tokenId);
+      // NOTE: OpenSea refresh moved to AFTER Vercel deployment
       
     } catch (e) {
       console.log(`  ❌ Failed: ${e.message}`);
@@ -230,6 +229,12 @@ ${seedEntries}
       console.log('  📦 Running vercel --prod...');
       execSync('vercel --prod -y', { cwd: repoDir, stdio: 'inherit' });
       console.log('✅ Deployed!');
+      
+      // NOW refresh OpenSea metadata (after API is deployed with new image URLs)
+      console.log('\n🔄 Refreshing OpenSea metadata...');
+      for (const { tokenId } of newMints) {
+        await refreshOpenSeaMetadata(tokenId);
+      }
       
     } catch (e) {
       console.log(`⚠️ Auto-deploy failed: ${e.message}`);
