@@ -673,7 +673,7 @@
         
         function showSeed(seed) {
             currentSeed = seed;
-            document.getElementById('preview').src = `art.html?seed=${seed}`;
+            document.getElementById('preview').src = `art.html#seed=${seed}`;
             document.getElementById('seed').textContent = seed;
             if (contract) checkSeed();
         }

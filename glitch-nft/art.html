@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>VΞCTOR DRΞΛM</title>
+  <title>VΞCTOR DRΞΛM v2</title>
   <style>
     * { margin: 0; padding: 0; }
     body { background: #000; overflow: hidden; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
@@ -45,7 +45,7 @@ async function fetchM() {
 fetchM(); setInterval(fetchM, 45000);
 
 // Check if seed provided in URL (minted piece) or not (preview mode)
-// Support both ?seed= (query) and #seed= (hash) for gateway compatibility
+// Support both query string (?seed=) and hash (#seed=) for gateway compatibility
 const urlParams = new URLSearchParams(window.location.search);
 const hashParams = new URLSearchParams(window.location.hash.slice(1));
 const urlSeed = urlParams.get('seed') || hashParams.get('seed');
@@ -690,32 +690,36 @@ void main(){
       } else {
         // Color bleed - soft color wash
         col = mix(col, zoneCol * 0.7, zoneFade * 0.5);
-        // Add some pixel noise on top
-        float noiseRand = H(pxCoord + ps * 10.0 + floor(t * 3.0));
-        if(noiseRand < 0.15 * zoneFade) {
+        // Add some pixel noise on top - STABILIZED: fixed pattern, pulsing visibility
+        float noiseRand = H(pxCoord + ps * 10.0 + 22.0);
+        float noisePulse = sin(t * 2.0 + ps) * 0.5 + 0.5;
+        if(noiseRand < 0.15 * zoneFade * noisePulse) {
           col = zoneCol;
         }
       }
     }
   }
   
-  // === SCATTERED NOISE PIXELS ===
-  float noiseRand = H(pxCoord + floor(t * 2.0));
-  float noiseRand2 = H(pxCoord.yx + floor(t * 1.5));
+  // === SCATTERED NOISE PIXELS - STABILIZED: fixed pattern, smooth brightness ===
+  float noiseRand = H(pxCoord + 33.0);
+  float noiseBright = 0.5 + 0.3 * sin(t * 1.5 + pxCoord.x * 0.1 + pxCoord.y * 0.1);
   if(noiseRand < scatter * 0.15) {
     float colSel = H(pxCoord + 500.0);
-    if(colSel < 0.5) col = c1 * (0.5 + noiseRand2);
-    else col = c2 * (0.5 + noiseRand2);
+    if(colSel < 0.5) col = c1 * noiseBright;
+    else col = c2 * noiseBright;
   }
   
   // === RECTANGULAR GLITCH OUTLINES === (disabled)
   // for(int i = 0; i < 6; i++) { ... }
   
-  // === SYNTHWAVE BAND GLITCHES (chunky horizontal tears, seed-controlled) ===
+  // === SYNTHWAVE BAND GLITCHES (chunky horizontal tears) - STABILIZED: fixed presence, animated opacity ===
   if(bandGlitch > 0.05) {
     for(int b = 0; b < 4; b++) {
       float fb = float(b);
-      float bandSeed = H(vec2(fb + 20.0, floor(t * 0.2)));
+      // FIXED seed - bands always present based on seed, not time
+      float bandSeed = H(vec2(fb + 20.0, 99.0));
+      // Smooth opacity pulsing instead of random appearance
+      float bandOpacity = 0.5 + 0.5 * sin(t * 0.5 + fb * 2.0);
       if(bandSeed > 1.0 - bandGlitch - vol * 0.1) {
         float bandY = (H(vec2(fb, 30.0)) - 0.5) * 1.8;
         float bandH = 0.02 + H(vec2(fb, 31.0)) * 0.06;
@@ -724,39 +728,41 @@ void main(){
           float bandShift = (H(vec2(fb, 32.0)) - 0.5) * 0.3;
           float bandRand = H(pxCoord + vec2(bandShift * 100.0, fb));
           
-          // Chunky color bands like the reference
+          // Chunky color bands with smooth opacity animation
           if(bandRand < 0.5) {
-            col = mix(col, c1 * 0.9, 0.7);
+            col = mix(col, c1 * 0.9, 0.7 * bandOpacity);
           } else if(bandRand < 0.7) {
-            col = mix(col, c3 * 0.8, 0.5);
+            col = mix(col, c3 * 0.8, 0.5 * bandOpacity);
           }
         }
       }
     }
   }
   
-  // === HORIZONTAL GLITCH DISPLACEMENT ===
-  float hGlitchLine = step(0.92 - vol * 0.05, H(vec2(pxCoord.y, floor(t * 4.0))));
+  // === HORIZONTAL GLITCH DISPLACEMENT - STABILIZED: smoother cycling ===
+  float glitchCycle = sin(t * 0.3) * 0.5 + 0.5; // slow smooth cycle
+  float hGlitchLine = step(0.92 - vol * 0.05, H(vec2(pxCoord.y, 50.0)));
   if(hGlitchLine > 0.5) {
-    float shiftAmt = (H(vec2(pxCoord.y + 1.0, floor(t * 4.0))) - 0.5) * 20.0;
+    float shiftAmt = (H(vec2(pxCoord.y + 1.0, 50.0)) - 0.5) * 20.0 * glitchCycle;
     vec2 shiftCoord = pxCoord + vec2(shiftAmt, 0.0);
-    float shiftRand = H(shiftCoord + floor(t * 2.0));
+    float shiftRand = H(shiftCoord + 100.0);
     if(shiftRand < density * 0.8) {
       col = mix(c1, c2, H(shiftCoord + 100.0));
     }
   }
   
-  // === BLOCK DISPLACEMENT ===
+  // === BLOCK DISPLACEMENT - STABILIZED: fixed blocks, smooth intensity ===
   vec2 blockCoord = floor(uv * 8.0);
-  float blockGlitch = step(0.88 - vol * 0.08, H(blockCoord + floor(t * 1.5)));
+  float blockGlitch = step(0.88 - vol * 0.08, H(blockCoord + 55.0)); // fixed seed
+  float blockIntensity = 0.5 + 0.5 * sin(t * 0.4 + blockCoord.x + blockCoord.y); // smooth pulse
   if(blockGlitch > 0.5) {
-    vec2 blockShift = (vec2(H(blockCoord + t), H(blockCoord.yx + t)) - 0.5) * 0.1;
-    vec2 newPxCoord = floor((uv + blockShift) * res.x / pixelSize);
+    vec2 blockShift = (vec2(H(blockCoord + 10.0), H(blockCoord.yx + 10.0)) - 0.5) * 0.1;
+    vec2 newPxCoord = floor((uv + blockShift * blockIntensity) * res.x / pixelSize);
     float bRand = H(newPxCoord + 200.0);
     if(bRand < 0.5) {
-      col = mix(col, c1, 0.7);
+      col = mix(col, c1, 0.7 * blockIntensity);
     } else if(bRand < 0.7) {
-      col = mix(col, c3, 0.6);
+      col = mix(col, c3, 0.6 * blockIntensity);
     }
   }
   
@@ -765,8 +771,10 @@ void main(){
   vec2 rCoord = floor((uv + vec2(rgbSplit, 0.0)) * res.x / pixelSize);
   vec2 bCoord = floor((uv - vec2(rgbSplit, 0.0)) * res.x / pixelSize);
   
-  float rShift = H(rCoord + floor(t * 2.0));
-  float bShift = H(bCoord + floor(t * 2.0));
+  // STABILIZED: smooth cycling instead of time-based jumps
+  float rgbCycle = sin(t * 0.5) * 0.5 + 0.5;
+  float rShift = H(rCoord + 77.0) * rgbCycle;
+  float bShift = H(bCoord + 77.0) * rgbCycle;
   
   if(rShift < density * 0.5 && col.r < 0.1) col.r += c1.r * 0.6;
   if(bShift < density * 0.5 && col.b < 0.1) col.b += c2.b * 0.5;
@@ -775,24 +783,26 @@ void main(){
   float scanGlitch = step(0.95, sin(puv.y * 300.0 + t * 50.0));
   col = mix(col, col.gbr, scanGlitch * 0.5);
   
-  // === PIXEL DROPOUT ===
-  float dropout = step(0.97, H(pxCoord + floor(t * 8.0)));
-  if(dropout > 0.5 && length(col) > 0.1) {
+  // === PIXEL DROPOUT - STABILIZED: fixed pattern with smooth flicker ===
+  float dropoutFlicker = sin(t * 3.0) * 0.5 + 0.5;
+  float dropout = step(0.97, H(pxCoord + 88.0));
+  if(dropout > 0.5 && dropoutFlicker > 0.7 && length(col) > 0.1) {
     col = vec3(0.0);
   }
   
-  // === FRAME CORRUPTION BLOCKS ===
+  // === FRAME CORRUPTION BLOCKS - STABILIZED: fixed blocks, smooth transition ===
   vec2 corruptBlock = floor(uv * 5.0);
-  float corrupt = step(0.93 - vol * 0.05, H(corruptBlock + floor(t * 0.8)));
-  if(corrupt > 0.5) {
-    col = col.brg;
+  float corrupt = step(0.93 - vol * 0.05, H(corruptBlock + 44.0));
+  float corruptCycle = sin(t * 0.25 + corruptBlock.x) * 0.5 + 0.5;
+  if(corrupt > 0.5 && corruptCycle > 0.6) {
+    col = mix(col, col.brg, corruptCycle);
   }
   
-  // === STATIC NOISE BURST ===
-  float staticBurst = step(0.96, H(vec2(floor(t * 6.0), 0.0)));
-  if(staticBurst > 0.5) {
-    float staticPx = H(pxCoord + t * 100.0);
-    if(staticPx > 0.7) col = vec3(staticPx * 0.5);
+  // === STATIC NOISE BURST - STABILIZED: rare, smooth fade ===
+  float staticCycle = sin(t * 0.15) * 0.5 + 0.5;
+  if(staticCycle > 0.9) {
+    float staticPx = H(pxCoord + 200.0);
+    if(staticPx > 0.8) col = mix(col, vec3(staticPx * 0.5), (staticCycle - 0.9) * 10.0);
   }
   
   // === AURORA COLOR CURTAINS (vertical color bleed) ===
@@ -932,27 +942,24 @@ void main(){
     col = mix(col, vec3(1.0) - col, invertAmt);
   }
   
-  // === LIGHTNING BOLTS (void style) ===
+  // === LIGHTNING BOLTS (void style) - STABILIZED: fixed positions, animated intensity ===
   if(lightningAmt > 0.1) {
     for(int bolt = 0; bolt < 6; bolt++) {
       float fbolt = float(bolt);
       float boltSeed = boltSeeds[bolt];
       
-      // Time-varying positions - bolts respawn in new locations
-      float timeSlot = floor(t * 2.0 + fbolt * 0.7);
-      
-      // Each bolt gets unique random start and end positions that change over time
+      // FIXED positions based on seed only (no time-based repositioning)
       vec2 start = vec2(
-        H(vec2(boltSeed + timeSlot, 710.0)) * 2.0 - 1.0,
-        H(vec2(boltSeed + timeSlot, 711.0)) * 2.0 - 1.0
+        H(vec2(boltSeed, 710.0)) * 2.0 - 1.0,
+        H(vec2(boltSeed, 711.0)) * 2.0 - 1.0
       );
       vec2 end = vec2(
-        H(vec2(boltSeed + timeSlot + 100.0, 712.0)) * 2.0 - 1.0,
-        H(vec2(boltSeed + timeSlot + 100.0, 713.0)) * 2.0 - 1.0
+        H(vec2(boltSeed + 100.0, 712.0)) * 2.0 - 1.0,
+        H(vec2(boltSeed + 100.0, 713.0)) * 2.0 - 1.0
       );
       
-      // Flicker on/off
-      float boltActive = step(0.3, H(vec2(fbolt, floor(t * 8.0)))) * lightningAmt;
+      // Smooth pulsing intensity instead of random flicker
+      float boltActive = (0.5 + 0.5 * sin(t * 2.0 + fbolt * 1.5)) * lightningAmt;
       
       // Pick bolt color from palette
       vec3 boltColor = c1;
@@ -992,8 +999,9 @@ void main(){
         float t1 = fseg / 10.0;
         float t2 = (fseg + 1.0) / 10.0;
         
-        float jag1 = (H(vec2(boltSeed + fseg, floor(t * 6.0))) - 0.5) * 0.25;
-        float jag2 = (H(vec2(boltSeed + fseg + 1.0, floor(t * 6.0))) - 0.5) * 0.25;
+        // STABILIZED: fixed jagged shape based on seed, slight smooth wobble
+        float jag1 = (H(vec2(boltSeed + fseg, 600.0)) - 0.5) * 0.25 + sin(t * 1.5 + fseg) * 0.02;
+        float jag2 = (H(vec2(boltSeed + fseg + 1.0, 600.0)) - 0.5) * 0.25 + sin(t * 1.5 + fseg + 1.0) * 0.02;
         
         vec2 p1 = mix(start, end, t1);
         vec2 p2 = mix(start, end, t2);
