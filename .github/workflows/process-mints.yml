@@ -35,13 +35,21 @@ jobs:
         run: npx puppeteer browsers install chrome
 
       - name: Process new mints
+        id: process
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           OPENSEA_API_KEY: ${{ secrets.OPENSEA_API_KEY }}
           CI: true
-        run: node scripts/process-new-mints.js
+        run: |
+          node scripts/process-new-mints.js 2>&1 | tee output.log
+          if grep -q "new mint" output.log; then
+            echo "has_new_mints=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_new_mints=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Commit and push changes
+        if: steps.process.outputs.has_new_mints == 'true'
         working-directory: .
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -49,3 +57,13 @@ jobs:
           git add -A
           git diff --staged --quiet || git commit -m "auto: update processed mints [skip ci]"
           git push
+
+      - name: Deploy to Vercel
+        if: steps.process.outputs.has_new_mints == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm i -g vercel
+          vercel pull --yes --token=$VERCEL_TOKEN
+          vercel build --prod --token=$VERCEL_TOKEN
+          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
