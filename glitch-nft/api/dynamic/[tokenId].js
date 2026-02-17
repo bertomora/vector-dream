@@ -11,17 +11,17 @@ const FALLBACK_IMAGE_BASE = 'https://vector-dream.vercel.app/api/svg';
 
 // Arweave image URLs - all using gateway.irys.xyz
 const ARWEAVE_IMAGES = {
-  "1": "https://gateway.irys.xyz/LuxDlQ63ILK-Txibc0ZkyDcx2nbQCLMHZYgqvv2xKLo",
-  "2": "https://gateway.irys.xyz/JYCTXl6S7v8AVZsB3c_DVm7xfnHsNOXpE2SIptfe2X4",
-  "3": "https://gateway.irys.xyz/lnMWGqQUvcVNUUpZ1PLTtxDW7DCeFSe4SAB_fe1SzHE",
-  "4": "https://gateway.irys.xyz/j2lOe68natrU72O-Y8gbQPwIzopaxtNPCkZLCnnLsQQ",
-  "5": "https://gateway.irys.xyz/uFpAR2_P6Q2gH9lVKOzxmR7bnlCGkshzxDbLll7i5YQ",
-  "6": "https://gateway.irys.xyz/9AFYuxs1vwGTamA3Kj67cTc9iANH_w6or1R1keT37t8",
-  "7": "https://gateway.irys.xyz/6mibupU3xV7yCrn-4FMqCQqqXK56TT4CPDOcPSj5M0g",
-  "8": "https://gateway.irys.xyz/M-atXpYeEINf_RmAGNW23AReMPuGSLXK2s1fyRRBLOg",
-  "9": "https://gateway.irys.xyz/ZB-buBxyUcQxa7vp9gBKHCHKHgdSPXjELb_nV9qbWTc",
-  "10": "https://gateway.irys.xyz/FUpoNLfeMr_putE4f5LZzUwtKG1w3Dky7E_Wdjko1yU",
-  "11": "https://gateway.irys.xyz/S15niFJnlhIvAfVvqF4zmaS4kixbzo9NGft8Yh-LyXA"
+  "1": "https://gateway.irys.xyz/EQkqd9CglCNSBk5D2dh_bYuyNsc2UHmVsQl6q0xSy2Q",
+  "2": "https://gateway.irys.xyz/U-e5-tatSCDihThfOLrQXGtM9nZMgyfenAQNCmr4Xd8",
+  "3": "https://gateway.irys.xyz/CSrlx4l9Apke5TR1cYjV8sSHIsF00BXHvL8J1ab_bGo",
+  "4": "https://gateway.irys.xyz/lGx5OrTLubrvGMLcdMgixgcoyVx3LnKN6QGpkgEvsUM",
+  "5": "https://gateway.irys.xyz/NFyLoHspGQXegRMh7jH4IaksTQWZwl5VhFe5S0Ouv4w",
+  "6": "https://gateway.irys.xyz/lKSU8QsqWrDWe9bZ6K3VtOLqViYGEOcd0_eujAXzSpU",
+  "7": "https://gateway.irys.xyz/VdDL7-KCGu9oj5wS2cxEMKu5p8FfSHiQGkPe6LyFEZI",
+  "8": "https://gateway.irys.xyz/pSHtlAHRPY24c9QuXKecsO_vg_FmUK4V_Lw8vbPVUXM",
+  "9": "https://gateway.irys.xyz/NNM5hAIHxnEebFfGrq-Lu8fEG7S7zhubj7QXZhAoVhU",
+  "10": "https://gateway.irys.xyz/yzLHP6JoiJeal18XrEWVU85_sgbI81mi62FCfvHD3hM",
+  "11": "https://gateway.irys.xyz/N8y8irlW2xG6kGVdYWbgo932zBnfOC-juC0slKrjOng"
 };
 
 // Mulberry32 PRNG - deterministic from seed
