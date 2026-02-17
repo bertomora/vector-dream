@@ -153,15 +153,25 @@ async function main() {
     const { execSync } = require('child_process');
     
     try {
-      // Build the new ARWEAVE_IMAGES object
-      const imageEntries = Object.entries(processed)
-        .sort((a, b) => Number(a[0]) - Number(b[0]))
+      // Build the ARWEAVE_IMAGES and TOKEN_SEEDS objects
+      const sortedEntries = Object.entries(processed).sort((a, b) => Number(a[0]) - Number(b[0]));
+      
+      const imageEntries = sortedEntries
         .map(([id, info]) => `  "${id}": "${info.arweaveUrl}"`)
         .join(',\n');
       
-      const newImagesBlock = `// Arweave image URLs (updated by process-new-mints.js, commit to deploy)
+      const seedEntries = sortedEntries
+        .map(([id, info]) => `  "${id}": ${info.seed}`)
+        .join(',\n');
+      
+      const newImagesBlock = `// Arweave image URLs (updated by process-new-mints.js)
 const ARWEAVE_IMAGES = {
 ${imageEntries}
+};
+
+// On-chain seeds (updated by process-new-mints.js)
+const TOKEN_SEEDS = {
+${seedEntries}
 };`;
       
       // Read the API file
@@ -169,18 +179,19 @@ ${imageEntries}
       let apiContent = fs.readFileSync(apiPath, 'utf8');
       const originalContent = apiContent;
       
-      // Replace the ARWEAVE_IMAGES block (handle both CRLF and LF)
-      const regex = /\/\/ Arweave image URLs[^\n]*\r?\nconst ARWEAVE_IMAGES = \{[^}]*\};/;
-      if (!regex.test(apiContent)) {
-        console.log('  ⚠️ Could not find ARWEAVE_IMAGES block in API file');
-        console.log('  Attempting alternative pattern...');
-        // Try simpler pattern
-        apiContent = apiContent.replace(
-          /const ARWEAVE_IMAGES = \{[^}]*\};/,
-          newImagesBlock
-        );
-      } else {
+      // Replace the ARWEAVE_IMAGES + TOKEN_SEEDS block
+      // Match from "// Arweave image URLs" through the TOKEN_SEEDS closing brace
+      const regex = /\/\/ Arweave image URLs[^]*?const TOKEN_SEEDS = \{[^}]*\};/;
+      if (regex.test(apiContent)) {
         apiContent = apiContent.replace(regex, newImagesBlock);
+      } else {
+        // Fallback: just replace ARWEAVE_IMAGES (first time adding TOKEN_SEEDS)
+        const fallbackRegex = /\/\/ Arweave image URLs[^\n]*\r?\nconst ARWEAVE_IMAGES = \{[^}]*\};/;
+        if (fallbackRegex.test(apiContent)) {
+          apiContent = apiContent.replace(fallbackRegex, newImagesBlock);
+        } else {
+          console.log('  ⚠️ Could not find ARWEAVE_IMAGES block in API file');
+        }
       }
       
       if (apiContent === originalContent) {
@@ -190,17 +201,34 @@ ${imageEntries}
         console.log('  ✅ API file updated');
       }
       
-      // Commit and push
-      console.log('\n🚀 Deploying to Vercel via git push...');
-      execSync('git add -A', { cwd: path.join(__dirname, '..') });
-      execSync(`git commit -m "auto: update Arweave URLs for tokens ${newMints.map(m => m.tokenId).join(', ')}"`, { 
-        cwd: path.join(__dirname, '..'),
-        stdio: 'inherit'
-      });
-      execSync('git push', { 
-        cwd: path.join(__dirname, '..'),
-        stdio: 'inherit'
-      });
+      // Commit, pull, push, then deploy directly with Vercel CLI
+      console.log('\n🚀 Deploying to Vercel...');
+      const repoDir = path.join(__dirname, '..');
+      
+      execSync('git add -A', { cwd: repoDir });
+      
+      try {
+        execSync(`git commit -m "auto: update Arweave URLs for tokens ${newMints.map(m => m.tokenId).join(', ')}"`, { 
+          cwd: repoDir,
+          stdio: 'inherit'
+        });
+      } catch (e) {
+        // No changes to commit is fine
+        if (!e.message.includes('nothing to commit')) throw e;
+      }
+      
+      // Pull with rebase to handle any remote changes, then push
+      try {
+        execSync('git pull --rebase', { cwd: repoDir, stdio: 'inherit' });
+        execSync('git push', { cwd: repoDir, stdio: 'inherit' });
+        console.log('  ✅ Git pushed');
+      } catch (e) {
+        console.log(`  ⚠️ Git push failed: ${e.message}`);
+      }
+      
+      // Deploy directly with Vercel CLI (don't rely on GitHub integration)
+      console.log('  📦 Running vercel --prod...');
+      execSync('vercel --prod -y', { cwd: repoDir, stdio: 'inherit' });
       console.log('✅ Deployed!');
       
     } catch (e) {

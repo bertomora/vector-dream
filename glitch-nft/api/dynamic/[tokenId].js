@@ -9,7 +9,7 @@ const ARWEAVE_ANIMATION = 'https://gateway.irys.xyz/J4bJx08zZmM1QEIPMbi9xfO3ICek
 const getAnimationUrl = (tokenId) => ARWEAVE_ANIMATION;
 const FALLBACK_IMAGE_BASE = 'https://vector-dream.vercel.app/api/svg';
 
-// Arweave image URLs (updated by process-new-mints.js, commit to deploy)
+// Arweave image URLs (updated by process-new-mints.js)
 const ARWEAVE_IMAGES = {
   "1": "https://gateway.irys.xyz/EQkqd9CglCNSBk5D2dh_bYuyNsc2UHmVsQl6q0xSy2Q",
   "2": "https://gateway.irys.xyz/U-e5-tatSCDihThfOLrQXGtM9nZMgyfenAQNCmr4Xd8",
@@ -23,6 +23,22 @@ const ARWEAVE_IMAGES = {
   "10": "https://gateway.irys.xyz/yzLHP6JoiJeal18XrEWVU85_sgbI81mi62FCfvHD3hM",
   "11": "https://gateway.irys.xyz/N8y8irlW2xG6kGVdYWbgo932zBnfOC-juC0slKrjOng",
   "12": "https://gateway.irys.xyz/5Ul7T7LLCkMKAn2ktAG_J7USv44OJ1x3ZX187Pera4g"
+};
+
+// On-chain seeds (updated by process-new-mints.js)
+const TOKEN_SEEDS = {
+  "1": 71296,
+  "2": 63756,
+  "3": 48331,
+  "4": 58,
+  "5": 11590,
+  "6": 31444,
+  "7": 93825,
+  "8": 94799,
+  "9": 96384,
+  "10": 91251,
+  "11": 36429,
+  "12": 94403
 };
 
 // Mulberry32 PRNG - deterministic from seed
@@ -147,7 +163,8 @@ module.exports = async (req, res) => {
 
   const { tokenId, seed: seedParam } = req.query;
   const id = parseInt(tokenId) || 1;
-  const seed = parseInt(seedParam) || id;
+  // Use real on-chain seed from TOKEN_SEEDS, fall back to seedParam or id
+  const seed = TOKEN_SEEDS[id.toString()] || parseInt(seedParam) || id;
 
   // Generate deterministic traits from seed
   const traits = generateTraitsFromSeed(seed);
