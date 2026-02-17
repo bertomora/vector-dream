@@ -450,6 +450,7 @@
                 max-width: 400px;
                 max-height: none;
                 aspect-ratio: auto;
+                overflow: visible;
             }
             .logo { font-size: 2.5rem; }
         }
@@ -490,6 +491,7 @@
                 aspect-ratio: auto;
                 padding: 10px 15px;
                 gap: 4px;
+                overflow: visible;
             }
             
             .tags { margin-bottom: 2px; }
@@ -612,6 +614,11 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
     <script>
+        // Check if ethers loaded
+        if (typeof ethers === 'undefined') {
+            console.error('ethers.js failed to load!');
+        }
+        
         const CONFIG = {
             contract: '0xbaE88927F84adc3a16aa3A41340631f5F285FA0A',
             chainId: 8453,
@@ -695,7 +702,9 @@
         document.getElementById('btn-forward').addEventListener('click', goForward);
         
         async function connect() {
+            console.log('Connect clicked');
             if (!window.ethereum) {
+                alert('No wallet detected! Please install MetaMask or use a wallet browser.');
                 return showStatus('Please install MetaMask or Coinbase Wallet', 'error');
             }
             
