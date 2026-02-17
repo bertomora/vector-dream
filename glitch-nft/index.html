@@ -61,24 +61,9 @@
             min-height: 100vh;
             position: relative;
             z-index: 1;
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
-            padding: 15px;
-        }
-        
-        /* Header */
-        .header {
-            text-align: center;
-            padding: 15px 10px;
-            border-bottom: 1px solid rgba(120, 115, 245, 0.2);
-            margin-bottom: 15px;
-        }
-        
-        /* Content wrapper */
-        .content {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
+            padding: 10px;
         }
         
         /* Preview Side */
@@ -441,99 +426,82 @@
         /* Desktop layout - side by side with bigger art */
         @media (min-width: 900px) {
             .main {
-                flex-direction: column;
-                max-width: 1400px;
-                padding: 40px 60px;
-            }
-            
-            .header {
-                padding: 20px 40px;
-                margin-bottom: 25px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 40px;
-                text-align: left;
-            }
-            
-            .header .logo { flex-shrink: 0; }
-            .header .logo h1 { font-size: 2.2rem; }
-            .header .logo .sub { font-size: 0.7rem; margin-top: 6px; letter-spacing: 4px; }
-            .header .badges { margin: 0; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
-            .header .badge { padding: 8px 16px; font-size: 0.75rem; }
-            .header .description { font-size: 0.75rem; max-width: 500px; margin: 0; line-height: 1.6; flex: 1; }
-            
-            .content {
                 flex-direction: row;
-                gap: 80px;
-                justify-content: center;
-                align-items: flex-start;
+                max-width: 1400px;
+                padding: 20px 40px;
+                gap: 40px;
             }
             
             .preview-side {
-                flex: 0 0 auto;
-                padding: 0;
+                flex: 1;
+                padding: 20px;
+                justify-content: center;
             }
             
             .preview-wrap {
-                width: min(55vw, 65vh);
-                max-width: 650px;
+                width: min(100%, 70vh);
+                height: auto;
+                max-width: 600px;
+                max-height: none;
+                aspect-ratio: 1;
             }
             
             .btn-generate {
-                margin-top: 30px;
-                padding: 18px 60px;
-                font-size: 1.1rem;
+                margin-top: 25px;
+                padding: 15px 50px;
+                font-size: 1rem;
             }
             
-            .nav-buttons { gap: 15px; }
-            .btn-nav { padding: 18px 28px; font-size: 1.1rem; }
+            .mint-side {
+                width: 360px;
+                flex-shrink: 0;
+                border-top: none;
+                border-left: 1px solid rgba(120, 115, 245, 0.3);
+                padding: 30px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            
+            .logo { margin-bottom: 25px; }
+            .logo h1 { font-size: 1.8rem; }
+            .logo .sub { font-size: 0.65rem; margin-top: 5px; }
+            
+            .badges { margin-bottom: 15px; }
+            .badge { padding: 6px 12px; font-size: 0.7rem; }
+            
+            .description { font-size: 0.7rem; margin-bottom: 20px; }
+            
+            .stats { padding: 15px; margin-bottom: 20px; }
+            .stat-row { padding: 10px 0; font-size: 0.85rem; }
+            .stat-label { font-size: 0.7rem; }
+            
+            .btn { padding: 16px; font-size: 0.85rem; margin-bottom: 10px; }
+            
+            .wallet-info { padding: 12px; font-size: 0.75rem; margin-bottom: 15px; }
+            
+            .mint-note { font-size: 0.65rem; margin-top: 15px; }
+            .footer { padding-top: 15px; }
+            .footer a { font-size: 0.65rem; margin: 0 8px; }
+        }
+        
+        /* Large desktop - even bigger art */
+        @media (min-width: 1200px) {
+            .main {
+                padding: 30px 60px;
+                gap: 60px;
+            }
+            
+            .preview-wrap {
+                max-width: min(100%, 75vh);
+            }
             
             .mint-side {
                 width: 400px;
-                flex-shrink: 0;
-                border-left: 1px solid rgba(120, 115, 245, 0.3);
-                padding: 0 0 0 60px;
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
+                padding: 40px;
             }
             
-            .stats { padding: 22px; margin-bottom: 25px; }
-            .stat-row { padding: 14px 0; font-size: 1rem; }
-            .stat-label { font-size: 0.85rem; letter-spacing: 2px; }
-            
-            .btn { padding: 18px; font-size: 0.95rem; margin-bottom: 12px; }
-            
-            .wallet-info { padding: 16px; font-size: 0.9rem; margin-bottom: 18px; }
-            
-            .mint-note { font-size: 0.8rem; margin-top: 20px; }
-            .footer { padding-top: 20px; }
-            .footer a { font-size: 0.8rem; margin: 0 15px; }
-        }
-        
-        /* Large desktop - even bigger */
-        @media (min-width: 1400px) {
-            .main {
-                max-width: 1700px;
-                padding: 30px 80px;
-            }
-            
-            .header { margin-bottom: 30px; gap: 60px; }
-            .header .logo h1 { font-size: 2.5rem; }
-            .header .description { max-width: 600px; font-size: 0.8rem; }
-            
-            .content { gap: 100px; }
-            
-            .preview-wrap {
-                width: min(55vw, 75vh);
-                max-width: 800px;
-            }
-            
-            .mint-side {
-                width: 450px;
-                padding-left: 80px;
-            }
+            .logo h1 { font-size: 2rem; }
         }
     </style>
 </head>
@@ -542,8 +510,19 @@
     <div class="scanlines"></div>
     
     <div class="main">
-        <!-- Header -->
-        <header class="header">
+        <div class="preview-side">
+            <div class="preview-wrap">
+                <div class="preview-glow"></div>
+                <iframe class="preview-frame" id="preview" src="art.html"></iframe>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn-nav" onclick="goBack()" id="btn-back" disabled>◀</button>
+                <button class="btn-generate" onclick="generate()">GENERATE</button>
+                <button class="btn-nav" onclick="goForward()" id="btn-forward" disabled>▶</button>
+            </div>
+        </div>
+        
+        <div class="mint-side">
             <div class="logo">
                 <h1>VΞCTOR DRΞΛM</h1>
                 <div class="sub">GENERATIVE ART ON BASE</div>
@@ -568,24 +547,8 @@
                 <span style="color:#7873f5">◇ Feeling lucky? Try <strong>RANDOM MINT</strong> ◇</span><br><br>
                 <span style="color:#555">Six styles: Synthwave • Databend • Corrupt • Neon • Isometric • Void (5% rare) — VHS wobble, CRT scanlines, film grain.</span>
             </p>
-        </header>
-        
-        <!-- Content: Art + Controls -->
-        <div class="content">
-            <div class="preview-side">
-                <div class="preview-wrap">
-                    <div class="preview-glow"></div>
-                    <iframe class="preview-frame" id="preview" src="art.html"></iframe>
-                </div>
-                <div class="nav-buttons">
-                    <button class="btn-nav" onclick="goBack()" id="btn-back" disabled>◀</button>
-                    <button class="btn-generate" onclick="generate()">GENERATE</button>
-                    <button class="btn-nav" onclick="goForward()" id="btn-forward" disabled>▶</button>
-                </div>
-            </div>
             
-            <div class="mint-side">
-                <div class="stats">
+            <div class="stats">
                 <div class="stat-row">
                     <span class="stat-label">Price</span>
                     <span class="stat-value" id="price">0.004 ETH</span>
@@ -623,7 +586,6 @@
             <div class="footer">
                 <a href="https://basescan.org/address/0xbae88927f84adc3a16aa3a41340631f5f285fa0a" target="_blank">Contract</a>
                 <a href="https://opensea.io/collection/vector-dreamz" target="_blank">OpenSea</a>
-            </div>
             </div>
         </div>
     </div>
