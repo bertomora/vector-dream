@@ -63,28 +63,20 @@ function mulberry32(seed) {
 // Color palette names (matches SVG generator colors)
 const colorNames = ['Sakura', 'Ultraviolet', 'Cyan', 'Seafoam', 'Azure', 'Sunset', 'Coral', 'Amethyst'];
 
-// Vaporwave prefix (tied to primary color)
+// Vaporwave prefix (expanded for uniqueness)
 const vaporPrefix = [
-  'Velvet',      // pink
-  'Prism',       // purple
-  'Chrome',      // cyan
-  'Palm',        // green
-  'Vapor',       // blue
-  'Marble',      // gold
-  'Holo',        // coral
-  'Laser'        // violet
+  'Velvet', 'Prism', 'Chrome', 'Palm', 'Vapor', 'Marble', 'Holo', 'Laser',
+  'Neon', 'Crystal', 'Pixel', 'Echo', 'Nova', 'Flux', 'Cyber', 'Dream',
+  'Synth', 'Retro', 'Glitch', 'Vortex', 'Plasma', 'Quantum', 'Void', 'Haze',
+  'Drift', 'Wave', 'Pulse', 'Static', 'Binary', 'Vector', 'Hologram', 'Spectra'
 ];
 
-// Digital/light/glitch words (tied to secondary color)
+// Digital/light/glitch words (expanded for uniqueness)
 const vaporPlaces = [
-  'Signal',      // pink - tech
-  'Pulse',       // purple - light/tech
-  'Grid',        // cyan - vector/geometry
-  'Ray',         // green - light
-  'Buffer',      // blue - tech
-  'Bloom',       // gold - light effect
-  'Static',      // coral - glitch
-  'Drift'        // violet - dreamy
+  'Signal', 'Pulse', 'Grid', 'Ray', 'Buffer', 'Bloom', 'Static', 'Drift',
+  'Wave', 'Core', 'Zone', 'Realm', 'Field', 'Stream', 'Echo', 'Glow',
+  'Flare', 'Surge', 'Beam', 'Flash', 'Burst', 'Flow', 'Cascade', 'Ripple',
+  'Shimmer', 'Spark', 'Trace', 'Arc', 'Loop', 'Cycle', 'Phase', 'Shift'
 ];
 
 // Moods (tied to combined color relationship)
@@ -125,8 +117,11 @@ function generateTraitsFromSeed(seed) {
 }
 
 function generateName(seed, tokenId, traits) {
-  const { primaryIdx, secondaryIdx } = traits;
-  return `${vaporPrefix[primaryIdx]} ${vaporPlaces[secondaryIdx]} #${tokenId}`;
+  // Use different bits of seed for name (independent of color traits)
+  // This ensures 32 × 32 = 1024 unique name combinations
+  const prefixIdx = seed % 32;
+  const placeIdx = Math.floor(seed / 32) % 32;
+  return `${vaporPrefix[prefixIdx]} ${vaporPlaces[placeIdx]} #${tokenId}`;
 }
 
 function generateDescription(seed, traits) {
