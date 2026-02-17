@@ -17,7 +17,8 @@ const ARWEAVE_IMAGES = {
   "5": "https://arweave.net/uFpAR2_P6Q2gH9lVKOzxmR7bnlCGkshzxDbLll7i5YQ",
   "6": "https://arweave.net/9AFYuxs1vwGTamA3Kj67cTc9iANH_w6or1R1keT37t8",
   "7": "https://arweave.net/6mibupU3xV7yCrn-4FMqCQqqXK56TT4CPDOcPSj5M0g",
-  "8": "https://arweave.net/FLI9Ae29n2g9fnaduvwpGxiBDGn6wMY7XCJ6EJhk6aM"
+  "8": "https://arweave.net/FLI9Ae29n2g9fnaduvwpGxiBDGn6wMY7XCJ6EJhk6aM",
+  "9": "https://arweave.net/tIAVTt4Ys57tuf4cjeeG3eMuN1Zr2aY6dMZz4fOL3SM"
 };
 
 // Mulberry32 PRNG - deterministic from seed
