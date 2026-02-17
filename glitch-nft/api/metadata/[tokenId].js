@@ -134,7 +134,14 @@ module.exports = async (req, res) => {
     const era = eras[eraIdx];
 
     // Use Arweave URL if processed, otherwise fallback to SVG
-    const imageUrl = ARWEAVE_URLS[tokenId] || `${BASE_URL}/api/svg/${seedNum}`;
+    // Convert arweave.net to gateway.irys.xyz (more reliable)
+    let imageUrl = ARWEAVE_URLS[tokenId] || `${BASE_URL}/api/svg/${seedNum}`;
+    if (imageUrl.includes('arweave.net/')) {
+      imageUrl = imageUrl.replace('https://arweave.net/', 'https://gateway.irys.xyz/');
+    }
+    if (imageUrl.includes('ar-io.net/')) {
+      imageUrl = imageUrl.replace(/https:\/\/[^/]+\.ar-io\.net\//, 'https://gateway.irys.xyz/');
+    }
 
     // Poetic description templates - each seed gets a unique variation
     const templates = [
@@ -163,17 +170,17 @@ module.exports = async (req, res) => {
       description = templates[templateIdx]();
     }
 
-    // V2 (stabilized) is default for all tokens, V1 only for legacy tokens owned by others
-    const V1_LEGACY_TOKENS = [3, 4, 5, 6, 7]; // Keep original animation for these only
-    const ANIMATION_V1 = 'https://arweave.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8';
-    const ANIMATION_V2 = 'https://arweave.net/DbdIWyf15_PtRdvW8QC05v_z4I8kpCqRk2gHt3snTV0';
-    const animationBase = V1_LEGACY_TOKENS.includes(parseInt(tokenId)) ? ANIMATION_V1 : ANIMATION_V2;
+    // Animation URL - V1 for legacy tokens (3-7), V2 for all others
+    const V1_LEGACY_TOKENS = [3, 4, 5, 6, 7];
+    const V1_ANIMATION = 'https://gateway.irys.xyz/J4bJx08zZmM1QEIPMbi9xfO3ICekBgyvzqrDPe4Y04I';
+    const V2_ANIMATION = 'https://gateway.irys.xyz/5dRL0pCZUH4-LLlqEUnkgubAlqNd5PrRWzLEa8hwafY';
+    const animationBase = V1_LEGACY_TOKENS.includes(parseInt(tokenId)) ? V1_ANIMATION : V2_ANIMATION;
 
     const metadata = {
       name: name,
       description: description,
       image: imageUrl,
-      animation_url: `${animationBase}?seed=${seedNum}`,
+      animation_url: `${animationBase}#seed=${seedNum}`,
       external_url: BASE_URL,
       attributes: [
         { trait_type: 'Style', value: style },

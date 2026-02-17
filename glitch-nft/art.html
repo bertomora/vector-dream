@@ -45,7 +45,10 @@ async function fetchM() {
 fetchM(); setInterval(fetchM, 45000);
 
 // Check if seed provided in URL (minted piece) or not (preview mode)
-const urlSeed = new URLSearchParams(window.location.search).get('seed');
+// Support both ?seed= (query) and #seed= (hash) for gateway compatibility
+const urlParams = new URLSearchParams(window.location.search);
+const hashParams = new URLSearchParams(window.location.hash.slice(1));
+const urlSeed = urlParams.get('seed') || hashParams.get('seed');
 const isMinted = urlSeed !== null; // If seed in URL, this is a minted/owned piece
 let seed = parseInt(urlSeed) || Math.floor(Math.random() * 100000);
 

@@ -12,7 +12,8 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const CONTRACT = '0xbae88927f84adc3a16aa3a41340631f5f285fa0a';
 const RPC = 'https://mainnet.base.org';
-const ART_URL = 'https://ar-io.net/lZQFvapdJasRD_E9Dbuvj_LsSpL9NN-sctxIM093hP8';
+// V2 stabilized animation - all new mints use this
+const ART_URL = 'https://gateway.irys.xyz/5dRL0pCZUH4-LLlqEUnkgubAlqNd5PrRWzLEa8hwafY';
 const PROCESSED_FILE = path.join(__dirname, '..', '.processed-mints.json');
 const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY || '';
 
@@ -107,7 +108,7 @@ async function main() {
       // Render the art
       const page = await browser.newPage();
       await page.setViewport({ width: 1000, height: 1000 });
-      await page.goto(`${ART_URL}?seed=${seed}`, { waitUntil: 'networkidle0', timeout: 30000 });
+      await page.goto(`${ART_URL}#seed=${seed}`, { waitUntil: 'networkidle0', timeout: 30000 });
       await wait(3000); // Let art animate
       
       const screenshot = await page.screenshot({ type: 'png' });
@@ -125,7 +126,7 @@ async function main() {
         ]
       });
       
-      const arweaveUrl = `https://ar-io.net/${receipt.id}`;
+      const arweaveUrl = `https://gateway.irys.xyz/${receipt.id}`;
       console.log(`  ✅ Uploaded: ${arweaveUrl}`);
       
       // Save to processed
